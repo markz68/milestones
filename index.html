@@ -18,13 +18,17 @@
       <p id="no-results" hidden>No matching events. Try a different search or filter.</p>
     </section>
     <aside class="save-note"><span aria-hidden="true">↧</span><p><strong>Your history belongs to you.</strong> This version saves in this browser. Export a backup regularly. Google Drive sync is not connected yet.</p></aside>
-    <footer><span>Milestones · v1.0.0</span><span id="backup-status">No backup exported yet</span></footer>
+    <footer><span>Milestones · v1.1.0</span><span id="backup-status">No backup exported yet</span></footer>
   </main>
   <dialog id="editor"><form id="event-form"><div class="dialog-head"><div><p class="eyebrow">A DATE WORTH KEEPING</p><h2 id="editor-title">Add an event</h2></div><button type="button" class="close" data-close aria-label="Close">×</button></div>
     <label>Event name<input id="title" required maxlength="120" placeholder="Adopted our dog"></label>
     <div class="two"><label>Icon<select id="icon"><option value="◷">◷ Milestone</option><option value="✈️">✈️ Travel</option><option value="🐾">🐾 Pet</option><option value="🏠">🏠 Home</option><option value="💼">💼 Work</option><option value="🎂">🎂 Birthday</option><option value="❤️">❤️ Family</option><option value="🎯">🎯 Goal</option></select></label><label>Category<input id="category" maxlength="50" placeholder="Home, travel, family…" list="categories"></label></div>
-    <label>How much of the date do you know?<select id="precision"><option value="day">Exact date</option><option value="month">Month and year</option><option value="year">Year only</option></select></label>
+    <label>Event timing<select id="repeat"><option value="none">One-time event / count time since</option><option value="origin">Annual, with an original date (birthday / anniversary)</option><option value="annual">Annual, without a start year (Christmas / holiday)</option></select></label>
+    <p class="field-hint" id="repeat-hint">Keep the original date and track time before or since it.</p>
+    <div id="original-date-fields"><label>How much of the date do you know?<select id="precision"><option value="day">Exact date</option><option value="month">Month and year</option><option value="year">Year only</option></select></label>
     <div id="date-fields"><label id="day-wrap">Date<input id="date-day" type="date" min="1000-01-01" max="9999-12-31"></label><label id="month-wrap" hidden>Month and year<input id="date-month" type="month" min="1000-01" max="9999-12"></label><label id="year-wrap" hidden>Year<input id="date-year" type="number" min="1000" max="9999" step="1" placeholder="1997"></label></div>
+    </div>
+    <div class="two" id="annual-fields" hidden><label>Month<select id="annual-month"></select></label><label>Day<input id="annual-day" type="number" min="1" max="31" step="1" placeholder="25"></label></div>
     <p class="field-hint" id="precision-hint">The event counts down before its date and counts up afterward.</p>
     <label>Notes <span class="optional">optional</span><textarea id="notes" rows="3" maxlength="5000" placeholder="What would you like to remember?"></textarea></label>
     <label>Date source <span class="optional">optional</span><input id="source" maxlength="1000" placeholder="Email subject, receipt, link, or a reminder to look it up"></label>

@@ -1,4 +1,4 @@
-# Milestones 1.0.0
+# Milestones 1.1.0
 
 A personal countdown and elapsed-time app for markz68. A responsive event list opens into event details. Dates can be exact, month/year, or year-only. Partial dates remain partial in storage, backups, and exports. Approximate time is labeled accordingly.
 
@@ -24,11 +24,11 @@ The app may be added to a home screen when supported by the browser. No package 
 
 ## Data ownership and current limitations
 
-**Google Drive sync is not implemented in version 1.0.0.** Each browser/device has a separate set of events. To move between devices, export a JSON backup and import it on the other device. Browser data can be lost if site storage is cleared, the browser profile is removed, or a private browsing session ends. A website deployment or GitHub repository does not back up your events.
+**Google Drive sync is not implemented in version 1.1.0.** Each browser/device has a separate set of events. To move between devices, export a JSON backup and import it on the other device. Browser data can be lost if site storage is cleared, the browser profile is removed, or a private browsing session ends. A website deployment or GitHub repository does not back up your events.
 
 JSON preserves event ID, title, date, precision (`day`, `month`, or `year`), icon, category, notes, source, pin status, and edit timestamp. Keep multiple dated backup copies outside the browser. The app can initiate a download but cannot verify that you actually saved it. The local undo point is not an independent backup. Editing in another tab refreshes the list and closes open editors to reduce stale overwrites; use one editing tab at a time.
 
-The “Upcoming” filter includes an uncertain event whose month/year contains today. It cannot know whether that event has already happened. No dates are prefilled or inferred from emails. Images, annual repeats, native Android widgets, and notifications are not included in this release.
+The “Upcoming” filter includes an uncertain event whose month/year contains today. It cannot know whether that event has already happened. No dates are prefilled or inferred from emails. Images, native Android widgets, and notifications are not included in this release.
 
 No personal event data is sent to GitHub by this app. GitHub serves the public app files and receives ordinary hosting requests. Other project pages on the same `markz68.github.io` origin share a browser security boundary; only deploy code you trust there.
 
@@ -37,3 +37,9 @@ No personal event data is sent to GitHub by this app. GitHub serves the public a
 Serve the repository over HTTP/HTTPS rather than opening `index.html` directly as a file. Run `node --test tests.mjs` for date and backup validation checks. The browser script is a native ES module.
 
 For future app-shell updates, increment `CACHE` in `sw.js` and update the cached file list. Offline cache stores application files only. New service workers activate after older app tabs close.
+
+## Annual events (1.1.0)
+
+Choose one-time, annual with an original date, or annual without a start year in the editor. A marriage/birthday uses one record for the original date, elapsed time, and next annual occurrence. It appears in Upcoming and also in Past after its original date. Holidays store only MM-DD with precision `annual`, never an invented origin year. Birthdays use the general “N-year anniversary” wording for now. Annual events with only an original month/year retain approximate month counts. Year-only events must have a known month before annual repetition can be enabled. February 29 uses February 28 in non-leap years, stated in the editor and details. These are fixed calendar repeats; floating holidays are not supported.
+
+Schema 2 backups include `repeat` (`none`, `origin`, `annual`) and support the new `annual` precision. Version 1 backups remain importable. Use version 1.1.0 or newer to restore version 2 backups. Existing browser data and IDs are preserved in place. The phone layout uses larger text, controls, and stacked event rows.

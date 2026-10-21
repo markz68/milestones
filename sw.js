@@ -1,4 +1,4 @@
-const CACHE='milestones-shell-v1';
+const CACHE='milestones-shell-v1.1.0';
 const FILES=['./','./index.html','./styles.css','./app.js','./dates.mjs','./data.mjs','./icon.svg','./manifest.webmanifest'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('milestones-shell-')&&k!==CACHE).map(k=>caches.delete(k)))));});
