@@ -27,3 +27,5 @@
 
 .data-status{flex:1;min-width:220px}#sync-overview{font-size:13px;color:var(--muted);line-height:1.6;margin:6px 0 0;overflow-wrap:anywhere}.category-control{min-width:150px}
 @media(max-width:600px){.data-status{min-width:0;width:100%}#sync-overview{font-size:15px}.controls .category-control{width:100%}.controls .category-control select{max-width:none}}
+
+.auto-sync-choice{font-weight:600;line-height:1.5;padding:14px;background:#f0f4ee;border-radius:9px;gap:12px}.auto-sync-choice input{flex-shrink:0;min-width:22px;min-height:22px}
