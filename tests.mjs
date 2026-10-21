@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {validDate,utcDate,range,calendarSpan,timeLabel,direction,nextOccurrence,nextLabel,isUpcoming} from './dates.mjs';
+import {validDate,utcDate,range,calendarSpan,timeLabel,direction,nextOccurrence,nextLabel,isUpcoming,ordinal,primaryLabel} from './dates.mjs';
 import {validateEvents,readBackup,mergeEvents,csvText} from './data.mjs';
 const event=(date,precision='day')=>({id:'one',title:'A milestone',date,precision,updatedAt:'2026-10-21T12:00:00Z'});
 test('Valid dates preserve precision and reject calendar rollover',()=>{assert.ok(validDate('1997-11','month'));assert.ok(validDate('1997','year'));assert.ok(validDate('2024-02-29','day'));for(const [v,p] of [['2025-02-29','day'],['2026-13','month'],['0999','year'],['2026-01-01','month'],['2026-00-10','day']])assert.equal(validDate(v,p),false);});
@@ -46,4 +46,22 @@ test('New backups preserve repeat types and old backups remain readable',()=>{
  assert.equal(readBackup({app:'Milestones',schemaVersion:1,events:[event('1997','year') ]})[0].repeat,'none');
  assert.throws(()=>validateEvents([{...event('12-25','annual'),repeat:'none'}]));
  assert.ok(csvText(events).includes('"repeat"'));
+});
+
+test('Birthday wording handles next age, today, unknown origin year and approximate months',()=>{
+ const b={...event('1968-10-08'),repeat:'origin',eventType:'birthday'};
+ assert.match(nextLabel(b,utcDate(2026,10,21)),/^Turning 59/);
+ assert.match(nextLabel(b,utcDate(2026,10,8)),/^Turns 58 today/);
+ assert.match(primaryLabel(b,utcDate(2026,10,21)),/^Age: 58 years/);
+ assert.match(nextLabel({...b,date:'10-08',precision:'annual',repeat:'annual'},utcDate(2026,10,21)),/^Next birthday/);
+ assert.match(nextLabel({...b,date:'1968-10',precision:'month'},utcDate(2026,10,21)),/Turning 58.*day unknown/);
+ assert.match(nextLabel({...b,date:'2028-10-08'},utcDate(2026,10,21)),/^Birth date/);
+});
+test('Wedding and other anniversary wording uses correct ordinals without icon inference',()=>{
+ for(const [n,label] of [[1,'1st'],[2,'2nd'],[3,'3rd'],[4,'4th'],[11,'11th'],[12,'12th'],[13,'13th'],[21,'21st'],[22,'22nd'],[23,'23rd'],[30,'30th'],[111,'111th']])assert.equal(ordinal(n),label);
+ const wedding={...event('1996-11-14'),repeat:'origin',eventType:'wedding',icon:'🌍'};
+ assert.match(nextLabel(wedding,utcDate(2026,10,21)),/^30th wedding anniversary/);
+ assert.match(nextLabel({...wedding,eventType:'anniversary'},utcDate(2026,10,21)),/^30th anniversary/);
+ assert.match(nextLabel({...wedding,eventType:'general',icon:'rings'},utcDate(2026,10,21)),/^30-year anniversary/);
+ assert.match(nextLabel({...wedding,date:'2028-11-14'},utcDate(2026,10,21)),/^Wedding day/);
 });

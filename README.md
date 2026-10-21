@@ -1,4 +1,4 @@
-# Milestones 1.2.2
+# Milestones 1.3.0
 
 Personal milestone tracker: count down to future events and track time since past events. Responsive list with detail/edit dialogs, approximate dates, annual repeats, and manual Google Drive sync.
 
@@ -37,7 +37,7 @@ Status reports the last completed check, not a guarantee that another device has
 
 **Export JSON on each device before your first sync.** JSON is for restoration; CSV is for viewing in Excel and escapes formula-like text. Keep dated copies outside the browser. A download request cannot verify the file was saved.
 
-Schema 3 JSON includes events, date precision, annual behavior, and timestamped deletion records. Version 1 and 2 backups remain importable. Import merges newer edits and deletions; an old backup does not silently resurrect a later deleted event. To undo a recent deletion, use **Restore previous local state**, which prompts before creating a new change restoring those events. The single undo point is replaced by the next save, import, or sync. It is not an independent backup.
+Schema 4 JSON includes events, date precision, annual behavior, event type, and timestamped deletion records. Schema 1, 2 and 3 backups remain importable. Update both devices to v1.3.0 before syncing; older releases cannot read schema 4 cloud snapshots and stop rather than silently discard event type. Import merges newer edits and deletions; an old backup does not silently resurrect a later deleted event. To undo a recent deletion, use **Restore previous local state**, which prompts before creating a new change restoring those events. The single undo point is replaced by the next save, import, or sync. It is not an independent backup.
 
 The first 1.2.0 visit migrates existing events and their IDs into the atomic `milestones.state.v3` local-storage document. The older `milestones.events.v1` copy is retained but no longer updated. Do not downgrade and edit using older app versions after migration. Close older app tabs on each device. Cross-tab updates refresh the list and close editors to prevent stale saves; use one editing tab at a time.
 
@@ -47,7 +47,7 @@ Events remain accessible offline after the app shell has been cached. Browser/si
 
 Serve the files at repository root using GitHub Pages, branch **main**, folder **/(root)**. `.nojekyll` bypasses Jekyll. No local build or dependency installation is needed. Check the Actions deployment result rather than assuming a successful upload has published. If no build starts, resetting the Pages publishing branch from None back to main has worked for this repository.
 
-After deployment, close old app tabs, reopen while online, and check **v1.2.2** in the footer. On each device connect the same Google account. Sync the PC first, then the phone, then the PC again. Test adding, editing and deleting a disposable event across devices. Test an offline edit followed by reconnecting and syncing. Independently exported backups should remain available throughout.
+After deployment, close old app tabs, reopen while online, and check **v1.3.0** in the footer. On each device connect the same Google account. Sync the PC first, then the phone, then the PC again. Test adding, editing and deleting a disposable event across devices. Test an offline edit followed by reconnecting and syncing. Independently exported backups should remain available throughout.
 
 Google OAuth and real phone-to-PC sync need live testing on the user's devices; mocked API tests cannot establish that the configured Google account has granted access.
 
@@ -63,3 +63,10 @@ Run `node --test tests.mjs sync-tests.mjs` for calendar dates, old/new backups, 
 - 1.2.1: fixes browser fetch context during Google connection and adds **Check older local events** under Backup & restore. Recovery merges the retained pre-sync local copy after confirmation; it never clears local storage. If the old copy is absent, import a saved JSON backup. A report of a missing phone event remains unconfirmed as to cause; no assumption is made that migration, storage clearing, or Google sync caused it.
 
 - 1.2.2: moves Add event into the timeline header and Google Drive sync / Backup & restore below the timeline near the footer, with full-width phone buttons.
+
+## Everyday improvements (1.3.0)
+
+- **Visible sync status:** bottom controls show never synced, local changes pending, sync in progress, last successful sync, and offline status. “No local changes” describes this device only; it cannot detect changes on another device until Sync now is used. Last-sync metadata changes from another tab update the summary.
+- **Event type:** General milestone, Birthday, Wedding / marriage, Other anniversary, or Holiday. Type controls wording and is independent from icon, category, and recurrence. Existing entries default to General milestone without guessing. Edit an entry to choose a type, and retain annual timing for annual countdowns. Birthday with original year shows Turning N or Turns N today; without a year, Next birthday. Wedding shows Nth wedding anniversary. Approximate months retain unknown-day wording.
+- **Category filter:** All categories, Uncategorized, and categories from your saved events. Works with All / Upcoming / Past, search, and sorting. Totals remain overall event totals. A selected category remains selected after its final event is removed, showing no matching events until another filter is selected.
+- Schema 4 preserves event type in backups and Drive snapshots and reads older schemas. The existing local storage key is retained; no data reset or second migration key is introduced. Existing schema 3 deletion history is preserved. Update all devices before syncing to prevent older clients rejecting the new schema.

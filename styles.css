@@ -24,3 +24,6 @@
  .workspace-top{align-items:center;gap:14px}.workspace-top #add{width:100%;font-size:17px}
  .data-tools{align-items:stretch;gap:12px}.data-tools .tools{width:100%;align-items:stretch;gap:10px}.data-tools .tools button{width:100%;font-size:16px;min-height:48px}
 }
+
+.data-status{flex:1;min-width:220px}#sync-overview{font-size:13px;color:var(--muted);line-height:1.6;margin:6px 0 0;overflow-wrap:anywhere}.category-control{min-width:150px}
+@media(max-width:600px){.data-status{min-width:0;width:100%}#sync-overview{font-size:15px}.controls .category-control{width:100%}.controls .category-control select{max-width:none}}

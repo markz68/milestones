@@ -31,9 +31,22 @@ export function nextOccurrence(e,now=todayDate()){
  const make=y=>{const d=Math.min(day,utcDate(y,month+1,0).getUTCDate());return {...e,repeat:'none',precision:e.precision==='month'?'month':'day',date:`${y}-${String(month).padStart(2,'0')}`+(e.precision==='month'?'':`-${String(d).padStart(2,'0')}`)};};
  let occurrence=make(year);if(range(occurrence).end<now)occurrence=make(year+1);return occurrence;
 }
+export function ordinal(n){const remainder=n%100;return `${n}${remainder>=11&&remainder<=13?'th':({1:'st',2:'nd',3:'rd'}[n%10]||'th')}`;}
 export function nextLabel(e,now=todayDate()){
- const n=nextOccurrence(e,now),timing=timeLabel(n,now);
+ const n=nextOccurrence(e,now),timing=timeLabel(n,now),type=e.eventType||'general';
  const number=e.repeat==='origin'?Number(n.date.slice(0,4))-Number(e.date.slice(0,4)):null;
- return `${number!==null&&number>0?number+'-year anniversary':'Next occurrence'} · ${dateLabel(n)} · ${timing}`;
+ let label='Next occurrence';
+ if(type==='birthday')label=number===null?'Next birthday':number===0?'Birth date':direction(n,now)==='current'&&n.precision==='day'?`Turns ${number} today`:`Turning ${number}`;
+ else if(type==='wedding')label=number!==null&&number>0?`${ordinal(number)} wedding anniversary`:number===0?'Wedding day':'Next wedding anniversary';
+ else if(type==='anniversary')label=number!==null&&number>0?`${ordinal(number)} anniversary`:'Next anniversary';
+ else if(type==='holiday')label='Next holiday';
+ else if(number!==null&&number>0)label=number+'-year anniversary';
+ return `${label} · ${dateLabel(n)} · ${timing}`;
+}
+export function primaryLabel(e,now=todayDate()){
+ if(e.repeat==='annual')return timeLabel(nextOccurrence(e,now),now);
+ const label=timeLabel(e,now);
+ if(e.eventType==='birthday'&&direction(e,now)==='past')return 'Age: '+label.replace(/ ago$/,'');
+ return label;
 }
 export function isUpcoming(e,now=todayDate()){return e.repeat==='origin'||e.repeat==='annual'||direction(e,now)!=='past';}

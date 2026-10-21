@@ -1,10 +1,14 @@
 import {GOOGLE_CLIENT_ID} from './drive-config.mjs';
 import {DriveStore,syncDrive} from './drive-api.mjs';
-import {signature,validateState} from './sync-state.mjs';
+import {signature,validateState,syncOverview} from './sync-state.mjs';
 export function initDriveSync({getLocal,applyLocal}){
  const $=id=>document.getElementById(id),ACCOUNT='milestones.drive.account.v1',LAST='milestones.drive.last.v1';
  let token=null,expires=0,busy=false,account=null,client=null,loading=null;
- const status=s=>{$('drive-status').textContent=s;};
+ function refreshOverview(message=null){
+  try{const summary=syncOverview(getLocal(),JSON.parse(localStorage.getItem(LAST)||'null'),navigator.onLine);$('sync-overview').textContent=message?message+' · '+summary:summary;}
+  catch{$('sync-overview').textContent='Sync status unavailable · Open Google Drive sync for details';}
+ }
+ const status=(s,summary=null)=>{$('drive-status').textContent=s;refreshOverview(summary);};
  const buttons=()=>{$('drive-connect').disabled=busy;$('drive-now').disabled=busy||!token;$('drive-disconnect').disabled=busy||!token;};
  function localChanged(){if(busy)return;try{const last=JSON.parse(localStorage.getItem(LAST)||'null');status(last?`Last successful sync: ${new Date(last.at).toLocaleString()}. ${signature(getLocal())===last.signature?'No changes on this device since then.':'Local changes need syncing.'}`:'Not synced yet. Events are saved on this device.');}catch{status('Events are local. Sync status is unavailable.');}}
  function loadGoogle(){
@@ -19,7 +23,7 @@ export function initDriveSync({getLocal,applyLocal}){
  $('drive-connect').addEventListener('click',()=>{
   if(!window.google?.accounts?.oauth2){status('Close and reopen this panel while online to load Google sign-in.');return;}
   if(!GOOGLE_CLIENT_ID.endsWith('.apps.googleusercontent.com')){status('Google client configuration is missing.');return;}
-  busy=true;buttons();status('Choose your Google account…');
+  busy=true;buttons();status('Choose your Google account…','Connecting to Google Drive');
   client=google.accounts.oauth2.initTokenClient({client_id:GOOGLE_CLIENT_ID,scope:'https://www.googleapis.com/auth/drive.appdata',include_granted_scopes:false,
    error_callback:()=>{busy=false;buttons();status('Google sign-in was canceled or blocked. Allow the popup and try again.');},
    callback:async result=>{
@@ -43,7 +47,7 @@ export function initDriveSync({getLocal,applyLocal}){
  $('drive-now').addEventListener('click',async()=>{
   if(busy||!token)return;
   if(Date.now()>=expires){token=null;buttons();status('Google session expired. Connect again, then choose Sync now.');return;}
-  busy=true;buttons();status('Checking Milestones in Google Drive…');
+  busy=true;buttons();status('Checking Milestones in Google Drive…','Sync in progress');
   try{
    // Fail before uploading if local storage cannot persist the account binding.
    validateState(getLocal());const bound=localStorage.getItem(ACCOUNT);
@@ -54,9 +58,9 @@ export function initDriveSync({getLocal,applyLocal}){
    const at=new Date().toISOString();
    localStorage.setItem(LAST,JSON.stringify({at,signature:result.pending?'pending':signature(result.state)}));
    status(result.pending?'Cloud copy verified, but new local edits arrived during sync. Choose Sync now again.':`Sync completed and cloud copy checked: ${result.state.events.length} events. Last successful sync: ${new Date(at).toLocaleString()}. Sync your other device to receive these changes.`);
-  }catch(e){if(e.status===401){token=null;account=null;$('drive-account').textContent='Not connected';}status('Sync stopped: '+e.message+' Local events remain available.');}
+  }catch(e){if(e.status===401){token=null;account=null;$('drive-account').textContent='Not connected';}status('Sync stopped: '+e.message+' Local events remain available.','Sync needs attention');}
   finally{busy=false;buttons();}
  });
- window.addEventListener('milestones-changed',localChanged);buttons();localChanged();
+ window.addEventListener('online',()=>refreshOverview());window.addEventListener('offline',()=>refreshOverview());window.addEventListener('storage',e=>{if(e.key===LAST)localChanged();});window.addEventListener('milestones-changed',localChanged);buttons();localChanged();
  return {localChanged};
 }

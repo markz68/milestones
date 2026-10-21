@@ -1,9 +1,9 @@
 import {validateEvents} from './data.mjs';
-export const STATE_SCHEMA=3;
+export const STATE_SCHEMA=4;
 const timestamp=x=>typeof x==='string'&&Number.isFinite(Date.parse(x));
 export function validateState(value){
- if(!value||value.app!=='Milestones'||![1,2,3].includes(value.schemaVersion))throw Error('Unsupported Milestones backup format.');
- const events=validateEvents(value.events),deleted=value.schemaVersion===3?value.deleted:[];
+ if(!value||value.app!=='Milestones'||![1,2,3,4].includes(value.schemaVersion))throw Error('Unsupported Milestones backup format.');
+ const events=validateEvents(value.events),deleted=value.schemaVersion>=3?value.deleted:[];
  if(!Array.isArray(deleted)||deleted.length>20000)throw Error('Invalid deletion history.');
  const ids=new Set();const clean=deleted.map(x=>{if(!x||typeof x.id!=='string'||!x.id||x.id.length>100||ids.has(x.id)||!timestamp(x.updatedAt))throw Error('Invalid deletion record.');ids.add(x.id);return {id:x.id,updatedAt:x.updatedAt};});
  const state={app:'Milestones',schemaVersion:STATE_SCHEMA,events,deleted:clean};
@@ -24,7 +24,7 @@ function mergeValidated(states){
  return {app:'Milestones',schemaVersion:STATE_SCHEMA,events,deleted};
 }
 export function mergeStates(...states){return mergeValidated(states.map(validateState));}
-export function fromEvents(events){return validateState({app:'Milestones',schemaVersion:3,events,deleted:[]});}
+export function fromEvents(events){return validateState({app:'Milestones',schemaVersion:STATE_SCHEMA,events,deleted:[]});}
 export function nextTimestamp(state,now=Date.now()){
  const latest=Math.max(0,...state.events.map(e=>Date.parse(e.updatedAt)),...state.deleted.map(e=>Date.parse(e.updatedAt)));
  return new Date(Math.max(now,latest+1)).toISOString();
@@ -34,5 +34,13 @@ export function editedState(state,next){
  const withoutTime=e=>({...e,updatedAt:''});
  const events=valid.map(e=>{const previous=old.get(e.id);return previous&&signature(withoutTime(previous))===signature(withoutTime(e))?previous:{...e,updatedAt:stamp};});
  const deleted=[...state.deleted.filter(e=>!ids.has(e.id)),...state.events.filter(e=>!ids.has(e.id)).map(e=>({id:e.id,updatedAt:stamp}))];
- return validateState({app:'Milestones',schemaVersion:3,events,deleted});
+ return validateState({app:'Milestones',schemaVersion:STATE_SCHEMA,events,deleted});
+}
+
+// This describes only the local snapshot at the last completed sync.
+export function syncOverview(state,last,online=true){
+ const offline=online?'':'Offline · ';
+ if(!last||!Number.isFinite(Date.parse(last.at)))return offline+'Not synced yet · Events saved on this device';
+ const when=new Date(last.at).toLocaleString();
+ return offline+(signature(validateState(state))===last.signature?'No local changes since last sync':'Local changes need syncing')+' · Last synced '+when;
 }

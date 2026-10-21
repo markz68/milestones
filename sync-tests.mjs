@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {fromEvents,validateState,editedState,mergeStates,signature} from './sync-state.mjs';
+import {fromEvents,validateState,editedState,mergeStates,signature,syncOverview} from './sync-state.mjs';
 import {syncDrive,DriveStore,PREFIX} from './drive-api.mjs';
 const e=(id='one',title='Wedding',at='2026-01-01T00:00:00.000Z')=>({id,title,date:'1997-11-14',precision:'day',repeat:'origin',updatedAt:at});
 const copy=x=>structuredClone(x);
 function fakeStore(initial=[]){const snapshots=initial.map(copy);return {snapshots,async collect(){return {files:snapshots.map((_,i)=>({id:String(i)})),state:mergeStates(fromEvents([]),...snapshots)};},async append(s){snapshots.push(copy(s));}};}
 test('Legacy schemas migrate preserving IDs, dates, notes and recurrence',()=>{
- for(const schemaVersion of [1,2]){const s=validateState({app:'Milestones',schemaVersion,events:[{...e(),notes:'original email'}]});assert.equal(s.schemaVersion,3);assert.equal(s.events[0].id,'one');assert.equal(s.events[0].notes,'original email');assert.deepEqual(s.deleted,[]);assert.deepEqual(validateState(JSON.parse(JSON.stringify(s))),s);}
+ for(const schemaVersion of [1,2]){const s=validateState({app:'Milestones',schemaVersion,events:[{...e(),notes:'original email'}]});assert.equal(s.schemaVersion,4);assert.equal(s.events[0].id,'one');assert.equal(s.events[0].notes,'original email');assert.deepEqual(s.deleted,[]);assert.deepEqual(validateState(JSON.parse(JSON.stringify(s))),s);}
  assert.throws(()=>validateState({app:'Other app',schemaVersion:3,events:[],deleted:[]}));
  assert.throws(()=>validateState({app:'Milestones',schemaVersion:3,events:[],deleted:[{id:'one',updatedAt:'invalid'}]}));
 });
@@ -85,4 +85,21 @@ test('Recovering a retained legacy copy restores missing IDs without overriding 
  const recovered=mergeStates(current,legacy);
  assert.equal(recovered.events.length,2);assert.equal(recovered.events.find(x=>x.id==='edited').title,'New');assert.ok(recovered.events.find(x=>x.id==='missing'));assert.ok(recovered.deleted.find(x=>x.id==='deleted'));
  assert.equal(mergeStates(fromEvents([]),legacy).events.length,3);
+});
+
+test('Event types survive schema 4 backup, migration, deletion history and sync',async()=>{
+ let current=fromEvents([{...e(),eventType:'birthday',icon:'🌍'}]);assert.equal(current.schemaVersion,4);
+ assert.equal(validateState(JSON.parse(JSON.stringify(current))).events[0].eventType,'birthday');
+ assert.equal(validateState({app:'Milestones',schemaVersion:3,events:[e()],deleted:[]}).events[0].eventType,'general');
+ const legacyDeletion=validateState({app:'Milestones',schemaVersion:3,events:[],deleted:[{id:'removed',updatedAt:e().updatedAt}]});assert.equal(legacyDeletion.deleted.length,1);
+ const store=fakeStore();await syncDrive({store,getLocal:()=>current,applyLocal:s=>current=s});let second=fromEvents([]);await syncDrive({store,getLocal:()=>second,applyLocal:s=>second=s});assert.equal(second.events[0].eventType,'birthday');assert.equal(second.events[0].icon,'🌍');
+ assert.throws(()=>fromEvents([{...e(),eventType:'inferred-from-icon'}]));
+});
+test('Visible sync summary distinguishes never synced, pending, checked and offline',()=>{
+ const s=fromEvents([e()]),at='2026-10-21T12:00:00Z',last={at,signature:signature(s)};
+ assert.match(syncOverview(s,null),/Not synced yet/);
+ assert.match(syncOverview(s,last),/No local changes since last sync/);
+ assert.match(syncOverview(s,last,false),/^Offline/);
+ assert.match(syncOverview(editedState(s,[{...e(),title:'New title'}]),last),/Local changes need syncing/);
+ assert.match(syncOverview(s,{at:'bad'}),/Not synced yet/);
 });
