@@ -1,51 +1,61 @@
-# Milestones 1.1.1
+# Milestones 1.2.0
 
-A personal countdown and elapsed-time app for markz68. A responsive event list opens into event details. Dates can be exact, month/year, or year-only. Partial dates remain partial in storage, backups, and exports. Approximate time is labeled accordingly.
+Personal milestone tracker: count down to future events and track time since past events. Responsive list with detail/edit dialogs, approximate dates, annual repeats, and manual Google Drive sync.
 
-## Included
+## Events
 
-- Create, edit, delete, search, pin, sort, and filter events.
-- Notes, categories, icons, and date sources.
-- Browser-local storage with explicit save failures.
-- JSON export and validated, non-destructive merge import; the newest edit wins for matching IDs. Missing events are added. Import does not delete events, and importing an older backup can bring back previously deleted events.
-- CSV export for Excel. CSV is for reading, not restoration. Formula-like text is escaped.
-- One local undo point, including deletion recovery until another change.
-- Offline app shell after an initial successful HTTPS visit and service worker installation. Calendar-day calculations use the device's local date and UTC arithmetic to avoid DST shifts.
+- Exact date, month/year, or year only. Unknown date components remain unknown.
+- One-time events count down before their date and up afterward.
+- Annual events with an original date retain elapsed time and the next anniversary in one entry. Original month/year is supported with approximate wording; year-only needs a known month before annual repetition can be enabled.
+- Annual holidays without an origin year store only MM-DD. February 29 uses February 28 in non-leap years, explained in the editor. Floating holidays are not supported.
+- Notes, date sources, categories, pins, search, sorting, and icons including wedding rings, Christmas, home, and travel.
+- Larger phone text, controls, and stacked event rows.
 
-## Publish with GitHub Pages
+## Google Drive sync
 
-1. Create a repository named `milestones` under `markz68`. Use a public repository if required by your GitHub plan for Pages. The source code can be public; do not commit event backups or other personal data.
-2. Upload this folder's contents to the repository root, including `.nojekyll` and the files ending in `.mjs`. Do not nest them inside another `milestones` directory.
-3. In the repository, open **Settings → Pages**. Under **Build and deployment**, choose **Deploy from a branch**, select **main** and **/(root)**, and Save.
-4. GitHub should provide the deployment URL, expected to be `https://markz68.github.io/milestones/`. Wait for GitHub to confirm a successful deployment before relying on the URL.
-5. Open that URL in your regular browser, add a test event, reload, export a JSON backup, and verify the download. Import a copy into another browser to test restoration.
+Version 1.2.0 adds **manual** sync. Open **Google Drive sync**, choose **Connect Google Drive**, then **Sync now**. Use the same Google account on both devices. Sync the device you changed, then the other device. Reconnect when the Google session expires or the page reloads. Sync does not run in the background or automatically after edits.
 
-The app may be added to a home screen when supported by the browser. No package installation, build step, external libraries, API keys, or Google account is required for this version.
+The OAuth Web client ID in `drive-config.mjs` is public configuration, reused from Infinity Bottle because both apps use `https://markz68.github.io`. No client secret, API key, refresh token, or access token is stored in the repository. Access tokens stay in page memory. Google Identity Services loads when the sync dialog opens. The Google Cloud project must have the Drive API enabled, the origin authorized, and any required test-user access configured. The consent screen may retain the existing project's name. No Gmail access is requested.
 
-## Data ownership and current limitations
+Only the `drive.appdata` scope is requested. Google account information is obtained from Drive to show the connected account and bind this browser's first sync to its account ID. A different account is refused to prevent accidentally uploading one account's local events to another. Disconnect forgets this page's token and preserves local events, account binding, and cloud data. It does not revoke the shared OAuth grant or disconnect Infinity Bottle.
 
-**Google Drive sync is not implemented in version 1.1.0.** Each browser/device has a separate set of events. To move between devices, export a JSON backup and import it on the other device. Browser data can be lost if site storage is cleared, the browser profile is removed, or a private browsing session ends. A website deployment or GitHub repository does not back up your events.
+### Merge and concurrency behavior
 
-JSON preserves event ID, title, date, precision (`day`, `month`, or `year`), icon, category, notes, source, pin status, and edit timestamp. Keep multiple dated backup copies outside the browser. The app can initiate a download but cannot verify that you actually saved it. The local undo point is not an independent backup. Editing in another tab refreshes the list and closes open editors to reduce stale overwrites; use one editing tab at a time.
+Milestones writes immutable, separate snapshots named `milestones-sync-v1-<uuid>.json` in the private application-data space, tagged `app=Milestones`. It never reads, modifies, or deletes Infinity Bottle files. No existing cloud snapshot is overwritten. Older snapshots are combined with the current local state on every sync. Concurrent uploads therefore remain available for the next sync instead of replacing one another. A concurrent device's changes may require another sync to appear.
 
-The “Upcoming” filter includes an uncertain event whose month/year contains today. It cannot know whether that event has already happened. No dates are prefilled or inferred from emails. Images, native Android widgets, and notifications are not included in this release.
+- Merge uses stable event IDs and edit timestamps. Newer changes win for the same ID.
+- Saved deletions are timestamped and sync too. A deletion wins an exact timestamp tie. Equal-time edits use a deterministic tie-break so all devices converge.
+- Different IDs remain separate, even if titles match. Independently entering the same event on two devices can produce duplicates; review before deleting an extra entry.
+- Keep device clocks correct. Timestamps advance past previously seen changes. Whole events, rather than individual fields, are merged; concurrent edits to the same event do not combine notes field-by-field.
+- A confirmation appears before merging cloud changes into local data. The upload is read back and checked before local merged state is saved. A canceled merge or failed upload leaves local events unchanged. If local saving fails after upload, the cloud snapshot remains and the next sync can recover it.
+- Local changes arriving during upload are retained and marked as needing another sync.
+- Sync refuses malformed cloud data, incomplete listings, snapshots over 20 MB, more than 2,000 snapshots, or state exceeding 10,000 active events / 20,000 deletion records. It never prunes history automatically. Frequent use will eventually need history maintenance; export backups before any future maintenance.
 
-No personal event data is sent to GitHub by this app. GitHub serves the public app files and receives ordinary hosting requests. Other project pages on the same `markz68.github.io` origin share a browser security boundary; only deploy code you trust there.
+Status reports the last completed check, not a guarantee that another device has no unsynced changes. Cloud snapshots consume Drive storage. They are not a substitute for independent dated backups, and can be removed through Google account/app-data management.
 
-## Development
+## Backups and local data
 
-Serve the repository over HTTP/HTTPS rather than opening `index.html` directly as a file. Run `node --test tests.mjs` for date and backup validation checks. The browser script is a native ES module.
+**Export JSON on each device before your first sync.** JSON is for restoration; CSV is for viewing in Excel and escapes formula-like text. Keep dated copies outside the browser. A download request cannot verify the file was saved.
 
-For future app-shell updates, increment `CACHE` in `sw.js` and update the cached file list. Offline cache stores application files only. New service workers activate after older app tabs close.
+Schema 3 JSON includes events, date precision, annual behavior, and timestamped deletion records. Version 1 and 2 backups remain importable. Import merges newer edits and deletions; an old backup does not silently resurrect a later deleted event. To undo a recent deletion, use **Restore previous local state**, which prompts before creating a new change restoring those events. The single undo point is replaced by the next save, import, or sync. It is not an independent backup.
 
-## Annual events (1.1.0)
+The first 1.2.0 visit migrates existing events and their IDs into the atomic `milestones.state.v3` local-storage document. The older `milestones.events.v1` copy is retained but no longer updated. Do not downgrade and edit using older app versions after migration. Close older app tabs on each device. Cross-tab updates refresh the list and close editors to prevent stale saves; use one editing tab at a time.
 
-Choose one-time, annual with an original date, or annual without a start year in the editor. A marriage/birthday uses one record for the original date, elapsed time, and next annual occurrence. It appears in Upcoming and also in Past after its original date. Holidays store only MM-DD with precision `annual`, never an invented origin year. Birthdays use the general “N-year anniversary” wording for now. Annual events with only an original month/year retain approximate month counts. Year-only events must have a known month before annual repetition can be enabled. February 29 uses February 28 in non-leap years, stated in the editor and details. These are fixed calendar repeats; floating holidays are not supported.
+Events remain accessible offline after the app shell has been cached. Browser/site-storage clearing, profile removal, or private-mode expiry can remove local data. Installing the PWA and hosting code on GitHub do not back up events. Personal events are never committed to GitHub. Other apps on the same `markz68.github.io` origin share a browser security boundary; deploy only code you trust.
 
-Schema 2 backups include `repeat` (`none`, `origin`, `annual`) and support the new `annual` precision. Version 1 backups remain importable. Use version 1.1.0 or newer to restore version 2 backups. Existing browser data and IDs are preserved in place. The phone layout uses larger text, controls, and stacked event rows.
+## Publish and verify
 
-Version 1.1.1 adds wedding rings, Christmas, globe, vacation, graduation, retirement, vehicle, and maintenance icons. Icons do not change event timing or date precision.
+Serve the files at repository root using GitHub Pages, branch **main**, folder **/(root)**. `.nojekyll` bypasses Jekyll. No local build or dependency installation is needed. Check the Actions deployment result rather than assuming a successful upload has published. If no build starts, resetting the Pages publishing branch from None back to main has worked for this repository.
 
-Release 1.1.1 includes the expanded icon picker. The footer identifies the version currently served by GitHub Pages.
+After deployment, close old app tabs, reopen while online, and check **v1.2.0** in the footer. On each device connect the same Google account. Sync the PC first, then the phone, then the PC again. Test adding, editing and deleting a disposable event across devices. Test an offline edit followed by reconnecting and syncing. Independently exported backups should remain available throughout.
 
-Personal milestone tracker.
+Google OAuth and real phone-to-PC sync need live testing on the user's devices; mocked API tests cannot establish that the configured Google account has granted access.
+
+## Development and release history
+
+Run `node --test tests.mjs sync-tests.mjs` for calendar dates, old/new backups, tombstones, deterministic conflicts, simultaneous first syncs, failures, pagination, verification and in-flight local edits. Serve over HTTP/HTTPS rather than `file://`. OAuth is authorized for the deployed HTTPS origin, not the local preview. Increment `CACHE` in `sw.js` when updating the app shell. Cache contains application assets only, not event backups or Google API responses.
+
+- 1.0.0: local events, precision, backup/import, CSV and offline app shell.
+- 1.1.0: phone readability and annual events with optional original dates.
+- 1.1.1: expanded event icon picker.
+- 1.2.0: manual Google Drive sync, deletion history, verified cloud snapshots and backward-compatible backup migration.

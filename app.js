@@ -1,11 +1,24 @@
 import {todayDate,range,direction,dateLabel,timeLabel,calendarSpan,validDate,nextOccurrence,nextLabel,isUpcoming} from './dates.mjs';
-import {SCHEMA,validateEvents,readBackup,mergeEvents,csvText} from './data.mjs';
-const $=id=>document.getElementById(id),KEY='milestones.events.v1',UNDO='milestones.previous.v1',BACKUP='milestones.exported.v1';
-let events=[],editing=null,selected=null,filter='all',blocked=false,timer;
+import {validateEvents,csvText} from './data.mjs';
+import {STATE_SCHEMA,validateState,fromEvents,editedState,mergeStates,signature} from './sync-state.mjs';
+import {initDriveSync} from './drive-sync.mjs';
+const $=id=>document.getElementById(id),KEY='milestones.state.v3',LEGACY='milestones.events.v1',UNDO='milestones.previous.v3',BACKUP='milestones.exported.v1';
+let state=fromEvents([]),events=[],editing=null,selected=null,filter='all',blocked=false,timer;
 function newId(){return crypto.randomUUID?crypto.randomUUID():Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join('');}
 function notify(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(timer);timer=setTimeout(()=>$('toast').hidden=true,6000);}
-try{const stored=localStorage.getItem(KEY);if(stored!==null)events=validateEvents(JSON.parse(stored));}catch{blocked=true;notify('Saved data could not be read. No data has been overwritten. Export or recover your existing data before continuing.');}
-function save(next){if(blocked)throw new Error('Saving is disabled because existing data could not be read. Export the stored data before repairing storage.');const valid=validateEvents(next),old=localStorage.getItem(KEY);localStorage.setItem(UNDO,old??'[]');localStorage.setItem(KEY,JSON.stringify(valid));events=valid;render();}
+try{
+ const stored=localStorage.getItem(KEY);
+ if(stored!==null)state=validateState(JSON.parse(stored));
+ else{state=fromEvents(JSON.parse(localStorage.getItem(LEGACY)||'[]'));localStorage.setItem(KEY,JSON.stringify(state));try{const oldUndo=localStorage.getItem('milestones.previous.v1');if(oldUndo!==null)localStorage.setItem(UNDO,JSON.stringify(fromEvents(JSON.parse(oldUndo))));}catch{notify('Events were preserved, but the older undo point could not be migrated.');}}
+ events=state.events;
+}catch{blocked=true;notify('Saved data could not be read. No data has been overwritten. Export or recover your existing data before continuing.');}
+function currentState(){if(blocked)throw Error('Saving and syncing are paused because local data could not be read.');return validateState(JSON.parse(localStorage.getItem(KEY)));}
+function persist(next){
+ if(blocked)throw Error('Saving is paused because existing data could not be read.');
+ const valid=validateState(next),old=localStorage.getItem(KEY);localStorage.setItem(UNDO,old||JSON.stringify(fromEvents([])));localStorage.setItem(KEY,JSON.stringify(valid));
+ state=valid;events=state.events;render();window.dispatchEvent(new Event('milestones-changed'));
+}
+function save(next){const current=currentState();if(signature(current)!==signature(state))throw Error('Another tab changed these events. Close this editor and reload before saving.');persist(editedState(current,next));}
 function text(tag,value,cls){const el=document.createElement(tag);el.textContent=value;if(cls)el.className=cls;return el;}
 function eventIcon(value,cls){
  const el=text('span',value==='rings'?'':value||'◷',cls);
@@ -65,11 +78,12 @@ $('search').addEventListener('input',render);$('sort').addEventListener('change'
 $('backup').addEventListener('click',()=>{$('backup-error').textContent='';render();$('backups').showModal();});
 function download(content,name,type){const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 function stamp(){return new Date().toISOString().replaceAll(':','-').replace(/\.\d+Z$/,'Z');}
-$('export-json').addEventListener('click',()=>{try{if(blocked){download(localStorage.getItem(KEY)||'','milestones-unreadable-data.txt','text/plain');notify('Raw stored data download requested.');return;}download(JSON.stringify({app:'Milestones',schemaVersion:SCHEMA,exportedAt:new Date().toISOString(),events},null,2),`milestones-backup-${stamp()}.json`,'application/json');try{localStorage.setItem(BACKUP,new Date().toISOString());}catch{}render();notify('Backup download requested. Check that the file was saved.');}catch(error){$('backup-error').textContent=error.message;}});
+$('export-json').addEventListener('click',()=>{try{if(blocked){download(localStorage.getItem(KEY)||localStorage.getItem(LEGACY)||'','milestones-unreadable-data.txt','text/plain');notify('Raw stored data download requested.');return;}download(JSON.stringify({app:'Milestones',schemaVersion:STATE_SCHEMA,exportedAt:new Date().toISOString(),events,deleted:state.deleted},null,2),`milestones-backup-${stamp()}.json`,'application/json');try{localStorage.setItem(BACKUP,new Date().toISOString());}catch{}render();notify('Backup download requested. Check that the file was saved.');}catch(error){$('backup-error').textContent=error.message;}});
 $('export-csv').addEventListener('click',()=>download(csvText(events),`milestones-${stamp()}.csv`,'text/csv;charset=utf-8'));
 $('import-json').addEventListener('click',()=>$('import-file').click());
-$('import-file').addEventListener('change',async evt=>{const file=evt.target.files[0];if(!file)return;try{if(file.size>20*1024*1024)throw new Error('Backup is larger than the 20 MB limit.');const incoming=readBackup(JSON.parse(await file.text()));if(!confirm(`Import ${incoming.length} events? Missing events will be added. Matching IDs use the newer edited copy.`))return;const merged=mergeEvents(events,incoming);save(merged);$('backup-error').textContent='';notify('Backup imported. '+events.length+' events saved on this device.');}catch(error){$('backup-error').textContent='Import failed: '+error.message;}finally{evt.target.value='';}});
-$('undo').addEventListener('click',()=>{try{const raw=localStorage.getItem(UNDO);if(raw===null)return;const previous=validateEvents(JSON.parse(raw));if(!confirm(`Restore the previous local state (${previous.length} events)? Export your current events first if needed.`))return;save(previous);notify('Previous local state restored.');}catch(error){$('backup-error').textContent='Restore failed: '+error.message;}});
-window.addEventListener('storage',evt=>{if(evt.key===KEY){try{events=evt.newValue===null?[]:validateEvents(JSON.parse(evt.newValue));blocked=false;document.querySelectorAll('dialog[open]').forEach(d=>d.close());render();notify('Updated from another tab.');}catch{blocked=true;notify('Another tab wrote unreadable data. Saving has been paused.');}}});
+$('import-file').addEventListener('change',async evt=>{const file=evt.target.files[0];if(!file)return;try{if(file.size>20*1024*1024)throw new Error('Backup is larger than the 20 MB limit.');const incoming=validateState(JSON.parse(await file.text()));if(!confirm(`Import ${incoming.events.length} events? Missing events will be added. Newer edits and saved deletions win for matching IDs.`))return;persist(mergeStates(currentState(),incoming));$('backup-error').textContent='';notify('Backup imported. '+events.length+' events saved on this device.');}catch(error){$('backup-error').textContent='Import failed: '+error.message;}finally{evt.target.value='';}});
+$('undo').addEventListener('click',()=>{try{const raw=localStorage.getItem(UNDO);if(raw===null)return;const previous=validateState(JSON.parse(raw));if(!confirm(`Restore the previous local state (${previous.events.length} events)? Export your current events first if needed.`))return;save(previous.events);notify('Previous local state restored.');}catch(error){$('backup-error').textContent='Restore failed: '+error.message;}});
+window.addEventListener('storage',evt=>{if(evt.key===KEY){try{if(evt.newValue===null)throw Error('Local storage removed');state=validateState(JSON.parse(evt.newValue));events=state.events;blocked=false;document.querySelectorAll('dialog[open]').forEach(d=>d.close());render();window.dispatchEvent(new Event('milestones-changed'));notify('Updated from another tab.');}catch{blocked=true;notify('Another tab wrote unreadable data. Saving has been paused.');}}});
+initDriveSync({getLocal:currentState,applyLocal:next=>{document.querySelectorAll('dialog[open]').forEach(d=>{if(d.id!=='drive-dialog')d.close();});persist(mergeStates(next,currentState()));}});
 render();setInterval(()=>{render();if($('details').open){$('details').close();showDetails(selected);}},60000);
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(()=>{});
