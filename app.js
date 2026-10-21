@@ -7,6 +7,17 @@ function notify(message){$('toast').textContent=message;$('toast').hidden=false;
 try{const stored=localStorage.getItem(KEY);if(stored!==null)events=validateEvents(JSON.parse(stored));}catch{blocked=true;notify('Saved data could not be read. No data has been overwritten. Export or recover your existing data before continuing.');}
 function save(next){if(blocked)throw new Error('Saving is disabled because existing data could not be read. Export the stored data before repairing storage.');const valid=validateEvents(next),old=localStorage.getItem(KEY);localStorage.setItem(UNDO,old??'[]');localStorage.setItem(KEY,JSON.stringify(valid));events=valid;render();}
 function text(tag,value,cls){const el=document.createElement(tag);el.textContent=value;if(cls)el.className=cls;return el;}
+function eventIcon(value,cls){
+ const el=text('span',value==='rings'?'':value||'◷',cls);
+ if(value==='rings'){
+  el.setAttribute('aria-label','Wedding rings');
+  const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
+  svg.setAttribute('viewBox','0 0 48 36');svg.setAttribute('width','1.5em');svg.setAttribute('height','1.2em');svg.setAttribute('aria-hidden','true');
+  for(const cx of [17,31]){const circle=document.createElementNS(ns,'circle');for(const [k,v] of Object.entries({cx,cy:19,r:12,fill:'none',stroke:'#b48225','stroke-width':3}))circle.setAttribute(k,String(v));svg.append(circle);}
+  el.append(svg);
+ }
+ return el;
+}
 function precisionNote(e){if(e.precision==='annual')return 'Repeats annually · no start year';return e.precision==='day'?'Exact date':e.precision==='month'?'Exact day unknown':'Exact month and day unknown';}
 function distance(e,now){const r=range(nextOccurrence(e,now));return now<r.start?r.start-now:now>r.end?now-r.end:0;}
 function render(){const now=todayDate();$('today').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
@@ -20,11 +31,11 @@ function render(){const now=todayDate();$('today').textContent=new Date().toLoca
   return distance(a,now)-distance(b,now)||a.title.localeCompare(b.title);
  });
  $('empty').hidden=events.length>0;$('no-results').hidden=!events.length||shown.length>0;$('event-list').replaceChildren();
- for(const e of shown){const row=text('button','','event-row');row.type='button';row.append(text('span',e.icon||'◷','event-icon'));const name=text('span','','event-text');name.append(text('span',(e.pinned?'★ ':'')+e.title,'event-title'),text('span',dateLabel(e)+(['month','year'].includes(e.precision)?' · Approximate':'')+(e.category?' · '+e.category:''),'event-meta'));const time=text('span','','event-time');time.append(text('strong',e.repeat==='annual'?timeLabel(nextOccurrence(e,now),now):timeLabel(e,now)),text('small',e.precision==='annual'?'Annual countdown':e.precision==='day'?(direction(e,now)==='current'?'The day is here':direction(e,now)==='past'?'Time since':'Time until'):'Approximate date'));if(e.repeat==='origin'||e.repeat==='annual')time.append(text('small',nextLabel(e,now),'next-occurrence'));row.append(name,time,text('span','›','chevron'));row.addEventListener('click',()=>showDetails(e.id));$('event-list').append(row);}
+ for(const e of shown){const row=text('button','','event-row');row.type='button';row.append(eventIcon(e.icon,'event-icon'));const name=text('span','','event-text');name.append(text('span',(e.pinned?'★ ':'')+e.title,'event-title'),text('span',dateLabel(e)+(['month','year'].includes(e.precision)?' · Approximate':'')+(e.category?' · '+e.category:''),'event-meta'));const time=text('span','','event-time');time.append(text('strong',e.repeat==='annual'?timeLabel(nextOccurrence(e,now),now):timeLabel(e,now)),text('small',e.precision==='annual'?'Annual countdown':e.precision==='day'?(direction(e,now)==='current'?'The day is here':direction(e,now)==='past'?'Time since':'Time until'):'Approximate date'));if(e.repeat==='origin'||e.repeat==='annual')time.append(text('small',nextLabel(e,now),'next-occurrence'));row.append(name,time,text('span','›','chevron'));row.addEventListener('click',()=>showDetails(e.id));$('event-list').append(row);}
  $('categories').replaceChildren(...[...new Set(events.map(e=>e.category).filter(Boolean))].sort().map(v=>{const o=document.createElement('option');o.value=v;return o;}));
  try{const last=localStorage.getItem(BACKUP);$('backup-status').textContent=last?'Backup download requested '+new Date(last).toLocaleDateString():'No backup exported yet';$('undo').disabled=blocked||localStorage.getItem(UNDO)===null;}catch{$('backup-status').textContent='Browser storage unavailable';}
 }
-function showDetails(id){const e=events.find(x=>x.id===id);if(!e)return;selected=id;const box=$('detail-content');box.replaceChildren(text('span',e.icon||'◷','large-icon'),text('h2',e.title),text('p',dateLabel(e)+' · '+precisionNote(e)),text('p',e.repeat==='annual'?timeLabel(nextOccurrence(e)):timeLabel(e),'big-time'));
+function showDetails(id){const e=events.find(x=>x.id===id);if(!e)return;selected=id;const box=$('detail-content');box.replaceChildren(eventIcon(e.icon,'large-icon'),text('h2',e.title),text('p',dateLabel(e)+' · '+precisionNote(e)),text('p',e.repeat==='annual'?timeLabel(nextOccurrence(e)):timeLabel(e),'big-time'));
  const block=(heading,value)=>{const div=text('div','','detail-block');div.append(text('h3',heading),text('p',value));box.append(div);};
  if(e.repeat==='origin'||e.repeat==='annual'){block('Next annual event',nextLabel(e));if(e.date.endsWith('02-29'))block('Leap-day rule','In non-leap years, this event is observed on February 28.');}
  if(e.precision==='day')block('Total days',calendarSpan(range(e).start,todayDate()).totalDays.toLocaleString()+' days '+(direction(e)==='past'?'since this event':direction(e)==='upcoming'?'until this event':'· today'));
