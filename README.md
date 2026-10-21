@@ -1,4 +1,4 @@
-# Milestones 1.4.0
+# Milestones 1.4.1
 
 Personal milestone tracker: count down to future events and track time since past events. Responsive list with detail/edit dialogs, approximate dates, annual repeats, and Google Drive sync with optional automation.
 
@@ -84,3 +84,26 @@ Same-event conflict detection compares local and cloud records with the previous
 All existing schema 4 data, account bindings, event IDs, and backups remain compatible. No schema or local-storage migration is introduced in 1.4.0. Changes to Infinity Bottle are outside this release.
 
 Validation includes scheduler timing, retries, expiry/editor deferral, conflict pauses, unchanged-sync undo preservation, immutable-snapshot caching, and the existing date/backup/merge tests. Live Google authentication and device-to-device behavior must also be checked on the user's devices after deployment.
+
+
+## Production authorization preparation (1.4.1)
+
+Public information pages for the shared Google authorization project:
+
+- Homepage: https://markz68.github.io/milestones/about.html
+- Privacy policy: https://markz68.github.io/milestones/privacy.html
+- Terms: https://markz68.github.io/milestones/terms.html
+
+These pages describe both Milestones and Infinity Bottle. The Milestones footer and Drive dialog link to the disclosures. Sync behavior and existing event storage are unchanged. The release does not change Google's publishing status.
+
+In the existing Google Cloud project (project number 694239144470), open Google Auth Platform:
+
+1. Branding: review the existing app name, support email, developer contact, and public links above. Use contact addresses you monitor. Avoid renaming an existing project solely to match one app because authorization is shared.
+2. Data Access: confirm the apps' requested Drive permission is `https://www.googleapis.com/auth/drive.appdata`. Do not add broad Drive scopes for production. Review any other clients/scopes in the project before removing anything.
+3. Clients: preserve the existing Web client ID and authorized origin `https://markz68.github.io`. Do not create a replacement client, add a client secret to the apps, or change storage keys.
+4. Audience: review the current External / Testing status and select Publish app when the console's prerequisites are satisfied. Follow any Branding or Verification Center issues actually shown. Publishing and brand verification are separate. A homepage/privacy/terms page alone does not guarantee approval or domain verification.
+5. Confirm the console explicitly shows In production. Then reconnect using the same Google account on each device and test both apps with backups available. Do not delete cloud data to change publishing status.
+
+Production removes the Testing-specific seven-day authorization expiry and the need to pre-list test users. It does not provide permanent browser access tokens or closed-app sync. Milestones still reconnects after reload/expiry; Infinity Bottle still uses manual sync and currently explicitly requests consent when Connect is pressed. Infinity Bottle's Disconnect revokes the shared Google grant, so it can also affect Milestones authorization. That behavior is unchanged by this release.
+
+Console settings and verification cannot be inferred from repository deployment. As of preparation, this environment could not open Google Cloud Console, so production publishing must be completed and verified separately in the account's console.

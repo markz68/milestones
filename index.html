@@ -19,7 +19,7 @@
     </section>
     <aside class="save-note"><span aria-hidden="true">↧</span><p><strong>Your history belongs to you.</strong> Events save in this browser. Use Google Drive sync to share changes between devices, and keep exporting separate backups.</p></aside>
     <section class="data-tools" aria-label="Sync and backup tools"><div class="data-status"><span class="storage-label">Saved on this device</span><p id="sync-overview" role="status" aria-live="polite" aria-atomic="true">Not synced yet · Events saved on this device</p></div><div class="tools"><button id="drive-open">Google Drive sync</button><button id="backup">Backup &amp; restore</button></div></section>
-    <footer><span>Milestones · v1.4.0</span><span id="backup-status">No backup exported yet</span></footer>
+    <footer><span>Milestones · v1.4.1</span><span><a href="about.html">About</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></span><span id="backup-status">No backup exported yet</span></footer>
   </main>
   <dialog id="editor"><form id="event-form"><div class="dialog-head"><div><p class="eyebrow">A DATE WORTH KEEPING</p><h2 id="editor-title">Add an event</h2></div><button type="button" class="close" data-close aria-label="Close">×</button></div>
     <label>Event name<input id="title" required maxlength="120" placeholder="Adopted our dog"></label>
@@ -47,7 +47,7 @@
     <div class="backup-options"><button id="drive-connect" class="primary">Connect Google Drive</button><button id="drive-now" disabled>Sync now</button><button id="drive-disconnect" disabled>Disconnect this session</button></div>
     <p class="field-hint">Sync includes additions, edits, and deletions. Automatic sync pauses for a first merge needing review or conflicting edits. Use Sync now to review. Independently created entries stay separate. Keep both devices’ clocks correct.</p>
     <p class="field-hint">Cloud snapshots are separate from Infinity Bottle. Automatic sync checks after edits, when you return to the app, when internet access returns, and about once a minute while visible. It waits while you edit an event or use backups. Connect again after a reload or Google session expiry. Closing the app stops automatic sync; disconnecting keeps your data.</p>
-    <p class="field-hint">Sync is not an independent backup. Keep your dated JSON exports.</p>
+    <p class="field-hint">Sync is not an independent backup. Keep your dated JSON exports. <a href="privacy.html">How Google data is used</a> · <a href="terms.html">Terms</a></p>
   </dialog>
   <datalist id="categories"></datalist><div id="toast" role="status" aria-live="polite" hidden></div>
   <script type="module" src="app.js"></script>
