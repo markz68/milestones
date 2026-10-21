@@ -2,7 +2,7 @@ import {validateState,signature,mergeStates,fromEvents} from './sync-state.mjs';
 export const PREFIX='milestones-sync-v1-';
 const API='https://www.googleapis.com/drive/v3/';
 export class DriveStore{
- constructor(token,fetcher=fetch){this.token=token;this.fetcher=fetcher;}
+ constructor(token,fetcher=(...args)=>globalThis.fetch(...args)){this.token=token;this.fetcher=fetcher;}
  async request(path,options={},upload=false){
   const r=await this.fetcher((upload?'https://www.googleapis.com/upload/drive/v3/':API)+path,{...options,headers:{Authorization:'Bearer '+this.token,...options.headers},signal:AbortSignal.timeout(30000)});
   if(!r.ok){const e=Error(r.status===401?'Google session expired. Connect again.':r.status===403?'Google denied access. Check the Drive API and account permissions.':`Google Drive request failed (${r.status}). Retry Sync now.`);e.status=r.status;throw e;}return r;

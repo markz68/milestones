@@ -72,3 +72,17 @@ test('Cloud corruption, incomplete listings, token expiry and verification failu
  const corrupt=new DriveStore('test',async()=>Response.json({app:'Infinity Bourbon',schemaVersion:1,events:[]}));await assert.rejects(corrupt.read({id:'bad'}),/Unsupported/);
  const wrong=new DriveStore('test',async(_u,o)=>Response.json(o.method==='POST'?{id:'new'}:fromEvents([])));await assert.rejects(wrong.append(fromEvents([e()])),/verification failed/);
 });
+test('Default browser fetch keeps its global receiver during account connection',async()=>{
+ const original=globalThis.fetch;
+ try{
+  globalThis.fetch=async function(url){assert.equal(this,globalThis,'Native Window.fetch requires its global receiver');assert.match(url,/about\?/);return Response.json({user:{permissionId:'account-one',emailAddress:'test@example.com'}});};
+  const account=await new DriveStore('test-token').account();assert.equal(account.permissionId,'account-one');
+ }finally{globalThis.fetch=original;}
+});
+test('Recovering a retained legacy copy restores missing IDs without overriding newer edits or deletions',()=>{
+ const legacy=fromEvents([e('missing'),e('edited','Old'),e('deleted')]);
+ const current=validateState({app:'Milestones',schemaVersion:3,events:[e('edited','New','2026-02-01T00:00:00.000Z')],deleted:[{id:'deleted',updatedAt:'2026-02-01T00:00:00.000Z'}]});
+ const recovered=mergeStates(current,legacy);
+ assert.equal(recovered.events.length,2);assert.equal(recovered.events.find(x=>x.id==='edited').title,'New');assert.ok(recovered.events.find(x=>x.id==='missing'));assert.ok(recovered.deleted.find(x=>x.id==='deleted'));
+ assert.equal(mergeStates(fromEvents([]),legacy).events.length,3);
+});

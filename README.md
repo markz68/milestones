@@ -1,4 +1,4 @@
-# Milestones 1.2.0
+# Milestones 1.2.1
 
 Personal milestone tracker: count down to future events and track time since past events. Responsive list with detail/edit dialogs, approximate dates, annual repeats, and manual Google Drive sync.
 
@@ -47,7 +47,7 @@ Events remain accessible offline after the app shell has been cached. Browser/si
 
 Serve the files at repository root using GitHub Pages, branch **main**, folder **/(root)**. `.nojekyll` bypasses Jekyll. No local build or dependency installation is needed. Check the Actions deployment result rather than assuming a successful upload has published. If no build starts, resetting the Pages publishing branch from None back to main has worked for this repository.
 
-After deployment, close old app tabs, reopen while online, and check **v1.2.0** in the footer. On each device connect the same Google account. Sync the PC first, then the phone, then the PC again. Test adding, editing and deleting a disposable event across devices. Test an offline edit followed by reconnecting and syncing. Independently exported backups should remain available throughout.
+After deployment, close old app tabs, reopen while online, and check **v1.2.1** in the footer. On each device connect the same Google account. Sync the PC first, then the phone, then the PC again. Test adding, editing and deleting a disposable event across devices. Test an offline edit followed by reconnecting and syncing. Independently exported backups should remain available throughout.
 
 Google OAuth and real phone-to-PC sync need live testing on the user's devices; mocked API tests cannot establish that the configured Google account has granted access.
 
@@ -59,3 +59,5 @@ Run `node --test tests.mjs sync-tests.mjs` for calendar dates, old/new backups, 
 - 1.1.0: phone readability and annual events with optional original dates.
 - 1.1.1: expanded event icon picker.
 - 1.2.0: manual Google Drive sync, deletion history, verified cloud snapshots and backward-compatible backup migration.
+
+- 1.2.1: fixes browser fetch context during Google connection and adds **Check older local events** under Backup & restore. Recovery merges the retained pre-sync local copy after confirmation; it never clears local storage. If the old copy is absent, import a saved JSON backup. A report of a missing phone event remains unconfirmed as to cause; no assumption is made that migration, storage clearing, or Google sync caused it.

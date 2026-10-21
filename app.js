@@ -82,6 +82,15 @@ $('export-json').addEventListener('click',()=>{try{if(blocked){download(localSto
 $('export-csv').addEventListener('click',()=>download(csvText(events),`milestones-${stamp()}.csv`,'text/csv;charset=utf-8'));
 $('import-json').addEventListener('click',()=>$('import-file').click());
 $('import-file').addEventListener('change',async evt=>{const file=evt.target.files[0];if(!file)return;try{if(file.size>20*1024*1024)throw new Error('Backup is larger than the 20 MB limit.');const incoming=validateState(JSON.parse(await file.text()));if(!confirm(`Import ${incoming.events.length} events? Missing events will be added. Newer edits and saved deletions win for matching IDs.`))return;persist(mergeStates(currentState(),incoming));$('backup-error').textContent='';notify('Backup imported. '+events.length+' events saved on this device.');}catch(error){$('backup-error').textContent='Import failed: '+error.message;}finally{evt.target.value='';}});
+$('recover-legacy').addEventListener('click',()=>{
+ try{
+  const raw=localStorage.getItem(LEGACY);if(raw===null){$('backup-error').textContent='No older local copy was found in this browser. Import your saved JSON backup instead.';return;}
+  const older=fromEvents(JSON.parse(raw)),current=currentState(),merged=mergeStates(current,older);
+  if(signature(current)===signature(merged)){$('backup-error').textContent=`Older local copy checked (${older.events.length} events). No additional events to recover. If an event is still missing, import your JSON backup from the device that had it.`;return;}
+  if(!confirm(`The older local copy contains ${older.events.length} events. Current: ${current.events.length}. After merging: ${merged.events.length}.\n\nMerge this older copy? Newer edits and recorded deletions are preserved.`))return;
+  persist(merged);$('backup-error').textContent='';notify('Older local copy merged. Export a fresh JSON backup after checking your events.');
+ }catch(error){$('backup-error').textContent='Recovery stopped: '+error.message+' Your JSON backup can be imported instead.';}
+});
 $('undo').addEventListener('click',()=>{try{const raw=localStorage.getItem(UNDO);if(raw===null)return;const previous=validateState(JSON.parse(raw));if(!confirm(`Restore the previous local state (${previous.events.length} events)? Export your current events first if needed.`))return;save(previous.events);notify('Previous local state restored.');}catch(error){$('backup-error').textContent='Restore failed: '+error.message;}});
 window.addEventListener('storage',evt=>{if(evt.key===KEY){try{if(evt.newValue===null)throw Error('Local storage removed');state=validateState(JSON.parse(evt.newValue));events=state.events;blocked=false;document.querySelectorAll('dialog[open]').forEach(d=>d.close());render();window.dispatchEvent(new Event('milestones-changed'));notify('Updated from another tab.');}catch{blocked=true;notify('Another tab wrote unreadable data. Saving has been paused.');}}});
 initDriveSync({getLocal:currentState,applyLocal:next=>{document.querySelectorAll('dialog[open]').forEach(d=>{if(d.id!=='drive-dialog')d.close();});persist(mergeStates(next,currentState()));}});
