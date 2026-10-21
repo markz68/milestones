@@ -45,3 +45,5 @@ Choose one-time, annual with an original date, or annual without a start year in
 Schema 2 backups include `repeat` (`none`, `origin`, `annual`) and support the new `annual` precision. Version 1 backups remain importable. Use version 1.1.0 or newer to restore version 2 backups. Existing browser data and IDs are preserved in place. The phone layout uses larger text, controls, and stacked event rows.
 
 Version 1.1.1 adds wedding rings, Christmas, globe, vacation, graduation, retirement, vehicle, and maintenance icons. Icons do not change event timing or date precision.
+
+Release 1.1.1 includes the expanded icon picker. The footer identifies the version currently served by GitHub Pages.
