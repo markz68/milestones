@@ -6,19 +6,20 @@
   <title>Milestones</title><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header><div class="brand"><span class="brand-icon" aria-hidden="true">◷</span><div><strong>Milestones</strong><span>Your dates. Your history.</span></div></div><button id="add" class="primary">＋ Add event</button></header>
+  <header><div class="brand"><span class="brand-icon" aria-hidden="true">◷</span><div><strong>Milestones</strong><span>Your dates. Your history.</span></div></div></header>
   <main>
     <section class="intro"><p class="eyebrow" id="today"></p><h1>A little perspective<br>on the days that matter.</h1><p>Look forward to what’s next. Remember how far you’ve come.</p></section>
     <section class="stats" aria-label="Event totals"><div><span id="count-all">0</span><small>Saved events</small></div><div><span id="count-upcoming">0</span><small>Upcoming / current</small></div><div><span id="count-past">0</span><small>Past milestones</small></div></section>
     <section class="workspace" aria-label="Your events">
-      <div class="workspace-top"><h2>Your timeline</h2><div class="tools"><button id="drive-open">Google Drive sync</button><button id="backup">Backup &amp; restore</button><span class="storage-label">Saved on this device</span></div></div>
+      <div class="workspace-top"><h2>Your timeline</h2><button id="add" class="primary">＋ Add event</button></div>
       <div class="controls"><div class="tabs" role="group" aria-label="Filter events"><button class="active" data-filter="all" aria-pressed="true">All events</button><button data-filter="upcoming" aria-pressed="false">Upcoming</button><button data-filter="past" aria-pressed="false">Past</button></div><label class="search"><span class="sr-only">Search events</span><input id="search" type="search" placeholder="Search names, notes, sources…"></label><label><span class="sr-only">Sort events</span><select id="sort"><option value="nearest">Closest to today</option><option value="oldest">Oldest date first</option><option value="newest">Newest date first</option><option value="name">Event name</option></select></label></div>
       <div id="event-list"></div>
       <div id="empty"><span class="empty-icon" aria-hidden="true">◷</span><h3>Your story starts with a date.</h3><p>Add a trip you’re looking forward to, a job you started,<br>or a memory you want to keep.</p><button id="first-add" class="primary">Add your first event</button><p class="hint">Only remember the month or year? That works, too.</p></div>
       <p id="no-results" hidden>No matching events. Try a different search or filter.</p>
     </section>
     <aside class="save-note"><span aria-hidden="true">↧</span><p><strong>Your history belongs to you.</strong> Events save in this browser. Use Google Drive sync to share changes between devices, and keep exporting separate backups.</p></aside>
-    <footer><span>Milestones · v1.2.1</span><span id="backup-status">No backup exported yet</span></footer>
+    <section class="data-tools" aria-label="Sync and backup tools"><span class="storage-label">Saved on this device</span><div class="tools"><button id="drive-open">Google Drive sync</button><button id="backup">Backup &amp; restore</button></div></section>
+    <footer><span>Milestones · v1.2.2</span><span id="backup-status">No backup exported yet</span></footer>
   </main>
   <dialog id="editor"><form id="event-form"><div class="dialog-head"><div><p class="eyebrow">A DATE WORTH KEEPING</p><h2 id="editor-title">Add an event</h2></div><button type="button" class="close" data-close aria-label="Close">×</button></div>
     <label>Event name<input id="title" required maxlength="120" placeholder="Adopted our dog"></label>
