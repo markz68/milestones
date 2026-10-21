@@ -47,3 +47,5 @@ Schema 2 backups include `repeat` (`none`, `origin`, `annual`) and support the n
 Version 1.1.1 adds wedding rings, Christmas, globe, vacation, graduation, retirement, vehicle, and maintenance icons. Icons do not change event timing or date precision.
 
 Release 1.1.1 includes the expanded icon picker. The footer identifies the version currently served by GitHub Pages.
+
+Personal milestone tracker.
