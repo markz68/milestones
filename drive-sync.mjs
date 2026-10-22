@@ -7,7 +7,7 @@ export function initDriveSync({getLocal,applyLocal}){
  let token=null,expires=0,busy=false,account=null,client=null,store=null,loading=null,reviewMessage='';
  let enabled=true;try{enabled=localStorage.getItem(AUTO)!=='false';}catch{}
  $('drive-auto').checked=enabled;
- const editing=()=>!!document.querySelector('#editor[open],#backups[open]');
+ const editing=(automatic=false)=>!!document.querySelector('#editor[open],#delete-confirm[open]')||(automatic&&$('drive-dialog').open);
  function lastSync(){try{return JSON.parse(localStorage.getItem(LAST)||'null');}catch{return null;}}
  function baseline(){try{return validateState(JSON.parse(lastSync()?.signature));}catch{return null;}}
  function refreshOverview(message=null){
@@ -15,13 +15,13 @@ export function initDriveSync({getLocal,applyLocal}){
    const summary=syncOverview(getLocal(),lastSync(),navigator.onLine);
    const mode=reviewMessage?'Automatic sync paused: review needed':enabled?(token&&Date.now()<expires?'Auto sync on':'Auto sync on · Connect Google Drive to sync'):'Auto sync off';
    $('sync-overview').textContent=(message||mode)+' · '+summary;
-  }catch{$('sync-overview').textContent='Sync status unavailable · Open Google Drive sync for details';}
+  }catch{$('sync-overview').textContent='Sync status unavailable · Open Backup & Sync for details';}
  }
  const status=(s,summary=null)=>{$('drive-status').textContent=s;refreshOverview(summary);};
- const buttons=()=>{$('drive-connect').disabled=busy;$('drive-now').disabled=busy||!token;$('drive-disconnect').disabled=busy||!token;};
+ const buttons=()=>{$('drive-connect').disabled=busy;$('drive-now').disabled=busy||!token;$('drive-disconnect').disabled=busy||!token;$('backups').inert=busy;};
  function forgetSession(){token=null;account=null;store=null;client=null;expires=0;$('drive-account').textContent='Not connected';buttons();}
  function expireSession(){if(token&&Date.now()>=expires){forgetSession();status('Google session expired. Connect again to resume syncing. Local edits are preserved.','Reconnect to sync');return true;}return false;}
- const auto=createAutoSync({run:()=>performSync(true),canRun:()=>!!(token&&Date.now()<expires&&!busy&&navigator.onLine&&!document.hidden&&!editing())});
+ const auto=createAutoSync({run:()=>performSync(true),canRun:()=>!!(token&&Date.now()<expires&&!busy&&navigator.onLine&&!document.hidden&&!editing(true))});
  auto.setEnabled(enabled);
  function localChanged(){
   if(busy)return;
@@ -38,10 +38,11 @@ export function initDriveSync({getLocal,applyLocal}){
    s.onerror=()=>{clearTimeout(t);fail('Google sign-in could not load. Local events remain available.');};document.head.append(s);
   });return loading;
  }
- $('drive-open').addEventListener('click',()=>{
-  $('drive-dialog').showModal();expireSession();refreshOverview();$('drive-connect').disabled=true;
+ function openPanel(){
+  $('drive-dialog').dispatchEvent(new Event('milestones-panel-open'));$('drive-dialog').showModal();expireSession();refreshOverview();$('drive-connect').disabled=true;
   loadGoogle().then(buttons).catch(e=>{status(e.message);$('drive-connect').disabled=true;});
- });
+ }
+ for(const id of ['drive-open','settings-open'])$(id).addEventListener('click',openPanel);
  $('drive-auto').addEventListener('change',()=>{
   const wanted=$('drive-auto').checked;
   try{localStorage.setItem(AUTO,String(wanted));enabled=wanted;auto.setEnabled(enabled);if(enabled&&reviewMessage)auto.pause();status(enabled?'Automatic sync enabled. It runs while this app is open, online, and connected.':'Automatic sync disabled. Use Sync now whenever you want.');}
@@ -76,13 +77,13 @@ export function initDriveSync({getLocal,applyLocal}){
   if(busy)return {retry:true};
   if(!token||expireSession())return {};
   if(!navigator.onLine){status('Offline. Events are saved locally; sync can resume when internet access returns.');return {retry:true};}
-  if(editing()){status('Finish editing or close Backup & restore before syncing.');return {retry:true};}
+  if(editing(automatic)){status('Finish editing or close Backup & Sync to resume automatic syncing.');return {retry:true};}
   busy=true;buttons();status('Checking Milestones in Google Drive…',automatic?'Automatic sync in progress':'Sync in progress');
   try{
    validateState(getLocal());const bound=localStorage.getItem(ACCOUNT);
    if(bound&&bound!==account.permissionId)throw Error('Google account changed. Reconnect with the original account.');localStorage.setItem(ACCOUNT,account.permissionId);
    const base=baseline();let reviewed=false;
-   const result=await syncDrive({store,getLocal,applyLocal,canApply:()=>!editing(),
+   const result=await syncDrive({store,getLocal,applyLocal,canApply:()=>!editing(automatic),
     reviewMerge:async(local,remote)=>{
      if(!automatic&&reviewMessage&&!reviewed){
       const after=mergeStates(local,remote);
@@ -113,7 +114,7 @@ export function initDriveSync({getLocal,applyLocal}){
  function wake(reason){expireSession();refreshOverview();if(enabled)auto.request(reason);}
  window.addEventListener('online',()=>wake('online'));window.addEventListener('offline',()=>{auto.cancel();refreshOverview();});
  window.addEventListener('focus',()=>wake('focus'));document.addEventListener('visibilitychange',()=>{if(document.hidden)auto.cancel();else wake('visible');});
- for(const id of ['editor','backups'])$(id).addEventListener('close',()=>{if(enabled)auto.request('close');});
+ for(const id of ['editor','drive-dialog','delete-confirm'])$(id).addEventListener('close',()=>{if(enabled)auto.request('close');});
  window.addEventListener('storage',e=>{if(e.key===LAST)refreshOverview();if(e.key===AUTO){enabled=e.newValue!=='false';$('drive-auto').checked=enabled;auto.setEnabled(enabled);if(reviewMessage)auto.pause();refreshOverview();}});
  window.addEventListener('milestones-changed',localChanged);
  // Visible-page checks pick up changes on the other device without requiring a focus change.

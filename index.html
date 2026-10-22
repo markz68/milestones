@@ -6,7 +6,7 @@
   <title>Milestones</title><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header><div class="brand"><span class="brand-icon" aria-hidden="true">◷</span><div><strong>Milestones</strong><span>Your dates. Your history.</span></div></div></header>
+  <header><div class="brand"><span class="brand-icon" aria-hidden="true">◷</span><div><strong>Milestones</strong><span>Your dates. Your history.</span></div></div><button id="settings-open" class="icon-button" type="button" aria-label="Open Backup and Sync" title="Backup &amp; Sync">⚙</button></header>
   <main>
     <section class="intro"><p class="eyebrow" id="today"></p><h1>A little perspective<br>on the days that matter.</h1><p>Look forward to what’s next. Remember how far you’ve come.</p></section>
     <section class="stats" aria-label="Event totals"><div><span id="count-all">0</span><small>Saved events</small></div><div><span id="count-upcoming">0</span><small>Upcoming / current</small></div><div><span id="count-past">0</span><small>Past milestones</small></div></section>
@@ -18,8 +18,8 @@
       <p id="no-results" hidden>No matching events. Try a different search or filter.</p>
     </section>
     <aside class="save-note"><span aria-hidden="true">↧</span><p><strong>Your history belongs to you.</strong> Events save in this browser. Use Google Drive sync to share changes between devices, and keep exporting separate backups.</p></aside>
-    <section class="data-tools" aria-label="Sync and backup tools"><div class="data-status"><span class="storage-label">Saved on this device</span><p id="sync-overview" role="status" aria-live="polite" aria-atomic="true">Not synced yet · Events saved on this device</p></div><div class="tools"><button id="drive-open">Google Drive sync</button><button id="backup">Backup &amp; restore</button></div></section>
-    <footer><span>Milestones · v1.4.1</span><span><a href="about.html">About</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></span><span id="backup-status">No backup exported yet</span></footer>
+    <section class="data-tools" aria-label="Sync and backup tools"><div class="data-status"><span class="storage-label">Saved on this device</span><p id="sync-overview" role="status" aria-live="polite" aria-atomic="true">Not synced yet · Events saved on this device</p></div><div class="tools"><button id="drive-open" type="button">☁ Backup &amp; Sync</button></div></section>
+    <footer><span>Milestones · v1.5.0</span><span><a href="about.html">About</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></span><span id="backup-status">No backup exported yet</span></footer>
   </main>
   <dialog id="editor"><form id="event-form"><div class="dialog-head"><div><p class="eyebrow">A DATE WORTH KEEPING</p><h2 id="editor-title">Add an event</h2></div><button type="button" class="close" data-close aria-label="Close">×</button></div>
     <label>Event name<input id="title" required maxlength="120" placeholder="Adopted our dog"></label>
@@ -39,15 +39,29 @@
     <p class="form-error" id="form-error" role="alert"></p><div class="dialog-actions"><button type="button" data-close>Cancel</button><button type="submit" class="primary">Save event</button></div>
   </form></dialog>
   <dialog id="details"><div class="dialog-head"><p class="eyebrow">EVENT DETAILS</p><button class="close" data-close aria-label="Close">×</button></div><div id="detail-content"></div><div class="dialog-actions"><button id="delete" class="danger">Delete</button><button id="edit" class="primary">Edit event</button></div></dialog>
-  <dialog id="backups"><div class="dialog-head"><div><p class="eyebrow">KEEP A COPY</p><h2>Backup &amp; restore</h2></div><button class="close" data-close aria-label="Close">×</button></div><p>A JSON backup includes every event, its date precision, and deletion history. Keep copies somewhere outside this browser.</p><div class="backup-options"><button id="export-json" class="primary">Download JSON backup</button><button id="export-csv">Export CSV for Excel</button><button id="import-json">Import JSON backup</button><input id="import-file" type="file" accept=".json,application/json" hidden><button id="recover-legacy">Check older local events</button><button id="undo">Restore previous local state</button></div><p class="field-hint">Import merges events and saved deletions. If an ID already exists, the newer change wins. Export a backup first if you want to preserve both versions.</p><p class="field-hint">“Check older local events” looks for events retained from before the sync upgrade in this browser. It previews a merge before saving. You can also import your pre-upgrade JSON backup. The previous local state is a single undo point for the last save, deletion, or import. It is not a separate backup.</p><p class="form-error" id="backup-error" role="alert"></p></dialog>
-  <dialog id="drive-dialog"><div class="dialog-head"><div><p class="eyebrow">PHONE + COMPUTER</p><h2>Google Drive sync</h2></div><button class="close" data-close aria-label="Close">×</button></div>
-    <p>Connect the same Google account on both devices. With automatic sync enabled, saved changes sync while this app is open, online, and connected.</p>
-    <label class="check auto-sync-choice"><input id="drive-auto" type="checkbox" checked> Automatically sync while connected</label>
-    <p id="drive-account">Not connected</p><p id="drive-status" role="status" aria-live="polite">Not synced yet.</p>
-    <div class="backup-options"><button id="drive-connect" class="primary">Connect Google Drive</button><button id="drive-now" disabled>Sync now</button><button id="drive-disconnect" disabled>Disconnect this session</button></div>
-    <p class="field-hint">Sync includes additions, edits, and deletions. Automatic sync pauses for a first merge needing review or conflicting edits. Use Sync now to review. Independently created entries stay separate. Keep both devices’ clocks correct.</p>
-    <p class="field-hint">Cloud snapshots are separate from Infinity Bottle. Automatic sync checks after edits, when you return to the app, when internet access returns, and about once a minute while visible. It waits while you edit an event or use backups. Connect again after a reload or Google session expiry. Closing the app stops automatic sync; disconnecting keeps your data.</p>
-    <p class="field-hint">Sync is not an independent backup. Keep your dated JSON exports. <a href="privacy.html">How Google data is used</a> · <a href="terms.html">Terms</a></p>
+  <dialog id="drive-dialog" class="backup-dialog" aria-labelledby="backup-title">
+    <div class="dialog-head"><div><p class="eyebrow">KEEP YOUR HISTORY SAFE</p><h2 id="backup-title">Backup &amp; Sync</h2></div><button type="button" class="close" data-close aria-label="Close Backup and Sync">×</button></div>
+    <p class="panel-intro">Your events stay on this device. Use Google Drive to sync with your other devices, and keep an occasional JSON backup.</p>
+    <section class="backup-group" aria-labelledby="drive-title"><h3 id="drive-title">Google Drive</h3>
+      <div class="backup-options"><button id="drive-connect">Connect Google Drive</button><button id="drive-now" class="primary" disabled>Sync now</button><button id="drive-disconnect" disabled>Disconnect this session</button></div>
+      <p id="drive-account">Not connected</p><p id="drive-status" role="status" aria-live="polite">Not synced yet.</p>
+      <label class="check auto-sync-choice"><input id="drive-auto" type="checkbox" checked> Automatically sync while connected</label>
+      <p class="field-hint">Automatic sync runs while the app is open, visible, online, and connected. It waits while this panel is open. Sync now is always available when connected. Reconnect after a reload or Google session expiry.</p>
+      <details class="backup-advanced"><summary>How sync works</summary><p class="field-hint">Checks run after saved edits, when you return to the app or regain internet access, and about once a minute while visible. Additions, edits, and deletions sync. Conflicting edits or an initial merge may need review with Sync now. Independently created events stay separate. Keep both devices’ clocks correct.</p><p class="field-hint">Milestones snapshots are separate from Infinity Bottle. Disconnecting this session keeps your local events and cloud snapshots.</p></details>
+    </section>
+    <section id="backups" class="backup-group" aria-labelledby="local-title"><h3 id="local-title">Local backups</h3>
+      <div class="backup-options"><button id="export-json">Download JSON backup</button><button id="export-csv">Export CSV for Excel</button><button id="import-json">Import JSON backup</button><input id="import-file" type="file" accept=".json,application/json" hidden></div>
+      <p class="field-hint">JSON includes your events, date precision, and deletion history. Keep a copy outside this browser. Import merges newer edits and saved deletions for matching IDs.</p>
+      <details class="backup-advanced"><summary>Advanced recovery</summary><p class="field-hint">Export your current events first. These options change the local event list and can then sync to your other devices.</p><div class="backup-options"><button id="recover-legacy">Check older local events</button><button id="undo">Restore previous local state</button></div><p class="field-hint">Check older local events merges any retained pre-sync copy, preserving newer edits and deletions. Restore previous local state restores the single undo point from the last change. It is replaced by the next change and is not an independent backup.</p></details>
+      <p class="form-error" id="backup-error" role="alert"></p>
+    </section>
+    <p class="field-hint"><a href="privacy.html">How Google data is used</a> · <a href="terms.html">Terms</a></p><p class="panel-version">Milestones · v1.5.0</p>
+  </dialog>
+  <dialog id="delete-confirm" class="confirm-dialog" aria-labelledby="delete-title" aria-describedby="delete-explanation">
+    <p class="eyebrow">CONFIRM ACTION</p><h2 id="delete-title">Delete this event?</h2><p id="delete-explanation">Review the event before deleting it.</p>
+    <div class="confirm-record"><strong id="delete-name"></strong><span id="delete-date"></span><span id="delete-category"></span></div>
+    <p class="field-hint">This deletion can sync to your other devices. You can restore the previous local state until your next change.</p>
+    <div class="confirm-actions"><button id="cancel-delete" type="button" autofocus>Cancel</button><button id="confirm-delete" class="danger-button" type="button">Delete event</button></div>
   </dialog>
   <datalist id="categories"></datalist><div id="toast" role="status" aria-live="polite" hidden></div>
   <script type="module" src="app.js"></script>

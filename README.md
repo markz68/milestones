@@ -1,4 +1,4 @@
-# Milestones 1.4.1
+# Milestones 1.5.0
 
 Personal milestone tracker: count down to future events and track time since past events. Responsive list with detail/edit dialogs, approximate dates, annual repeats, and Google Drive sync with optional automation.
 
@@ -107,3 +107,14 @@ In the existing Google Cloud project (project number 694239144470), open Google 
 Production removes the Testing-specific seven-day authorization expiry and the need to pre-list test users. It does not provide permanent browser access tokens or closed-app sync. Milestones still reconnects after reload/expiry; Infinity Bottle still uses manual sync and currently explicitly requests consent when Connect is pressed. Infinity Bottle's Disconnect revokes the shared Google grant, so it can also affect Milestones authorization. That behavior is unchanged by this release.
 
 Console settings and verification cannot be inferred from repository deployment. As of preparation, this environment could not open Google Cloud Console, so production publishing must be completed and verified separately in the account's console.
+
+
+## Shared interface (1.5.0)
+
+The top-right settings gear and the single **Backup & Sync** button below the timeline open the same panel. It groups Google Drive and Local backups, with collapsed How sync works and Advanced recovery sections. Existing JSON export/import, CSV, legacy recovery, and previous-state restore remain available. The interface shares Infinity Bottle's popup spacing, close control, button grouping and small version label while retaining Milestones' green palette.
+
+Event deletion uses a white, readable confirmation dialog with the event name, date and category, an outlined Cancel button, and a red Delete event button. Cancel and Escape preserve the event; confirmed deletion retains the existing tombstone and undo behavior. The confirmed ID and edit timestamp are checked before saving.
+
+Automatic sync waits while Backup & Sync or a deletion confirmation is open, then resumes when it closes. Manual Sync now works inside the panel. Local backup controls are inert during an active sync to prevent overlapping restore actions. No data schema, local-storage keys, account binding, or cloud merge rules change.
+
+Google publishing status was changed to **In production** and successful syncing was confirmed by the owner on October 21, 2026. The earlier preparation notes describe the state before that manual console step. Access tokens still require reconnection after reload or expiry; production does not add persistent login.

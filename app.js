@@ -80,10 +80,24 @@ document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',
 $('precision').addEventListener('change',setPrecision);$('repeat').addEventListener('change',setPrecision);
 $('event-form').addEventListener('submit',evt=>{evt.preventDefault();try{const repeat=$('repeat').value,p=repeat==='annual'?'annual':$('precision').value,date=p==='annual'?$('annual-month').value+'-'+String($('annual-day').value).padStart(2,'0'):$(`date-${p}`).value;if(!validDate(date,p))throw new Error(p==='annual'?'Enter a valid month and day.':'Enter a valid date between years 1000 and 9999.');const e={id:editing||newId(),title:$('title').value.trim(),precision:p,date,repeat,eventType:$('event-type').value,category:$('category').value.trim(),notes:$('notes').value.trim(),source:$('source').value.trim(),icon:$('icon').value,pinned:$('pinned').checked,updatedAt:new Date().toISOString()};save(editing?events.map(x=>x.id===editing?e:x):[...events,e]);$('editor').close();notify('Event saved on this device.');}catch(error){$('form-error').textContent='Could not save: '+error.message;}});
 $('edit').addEventListener('click',()=>{$('details').close();openEditor(selected);});
-$('delete').addEventListener('click',()=>{const e=events.find(x=>x.id===selected);if(!confirm(`Delete “${e.title}”? You can restore the previous local state until your next change.`))return;try{save(events.filter(x=>x.id!==selected));$('details').close();notify('Event deleted. Previous local state is available in Backup & restore.');}catch(error){notify('Could not delete: '+error.message);}});
+let deleting=null;
+$('delete').addEventListener('click',()=>{
+ const e=events.find(x=>x.id===selected);if(!e)return;
+ deleting={id:e.id,updatedAt:e.updatedAt};$('delete-name').textContent=e.title;$('delete-date').textContent=dateLabel(e)+' · '+precisionNote(e);$('delete-category').textContent=e.category||'Uncategorized';$('delete-confirm').showModal();
+});
+$('cancel-delete').addEventListener('click',()=>$('delete-confirm').close());
+$('delete-confirm').addEventListener('close',()=>{deleting=null;});
+$('confirm-delete').addEventListener('click',()=>{
+ if(!deleting)return;
+ try{
+  const target=deleting,e=events.find(x=>x.id===target.id);
+  if(!e||e.updatedAt!==target.updatedAt)throw Error('This event changed. Close and reopen its details before deleting.');
+  save(events.filter(x=>x.id!==target.id));$('delete-confirm').close();$('details').close();notify('Event deleted. Previous local state is available under Backup & Sync → Advanced recovery.');
+ }catch(error){$('delete-confirm').close();notify('Could not delete: '+error.message);}
+});
 document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(t=>{t.classList.toggle('active',t===b);t.setAttribute('aria-pressed',String(t===b));});render();}));
 $('category-filter').addEventListener('change',render);$('search').addEventListener('input',render);$('sort').addEventListener('change',render);
-$('backup').addEventListener('click',()=>{$('backup-error').textContent='';render();$('backups').showModal();});
+$('drive-dialog').addEventListener('milestones-panel-open',()=>{$('backup-error').textContent='';render();});
 function download(content,name,type){const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 function stamp(){return new Date().toISOString().replaceAll(':','-').replace(/\.\d+Z$/,'Z');}
 $('export-json').addEventListener('click',()=>{try{if(blocked){download(localStorage.getItem(KEY)||localStorage.getItem(LEGACY)||'','milestones-unreadable-data.txt','text/plain');notify('Raw stored data download requested.');return;}download(JSON.stringify({app:'Milestones',schemaVersion:STATE_SCHEMA,exportedAt:new Date().toISOString(),events,deleted:state.deleted},null,2),`milestones-backup-${stamp()}.json`,'application/json');try{localStorage.setItem(BACKUP,new Date().toISOString());}catch{}render();notify('Backup download requested. Check that the file was saved.');}catch(error){$('backup-error').textContent=error.message;}});
@@ -102,5 +116,5 @@ $('recover-legacy').addEventListener('click',()=>{
 $('undo').addEventListener('click',()=>{try{const raw=localStorage.getItem(UNDO);if(raw===null)return;const previous=validateState(JSON.parse(raw));if(!confirm(`Restore the previous local state (${previous.events.length} events)? Export your current events first if needed.`))return;save(previous.events);notify('Previous local state restored.');}catch(error){$('backup-error').textContent='Restore failed: '+error.message;}});
 window.addEventListener('storage',evt=>{if(evt.key===KEY){try{if(evt.newValue===null)throw Error('Local storage removed');state=validateState(JSON.parse(evt.newValue));events=state.events;blocked=false;document.querySelectorAll('dialog[open]').forEach(d=>d.close());render();window.dispatchEvent(new Event('milestones-changed'));notify('Updated from another tab.');}catch{blocked=true;notify('Another tab wrote unreadable data. Saving has been paused.');}}});
 initDriveSync({getLocal:currentState,applyLocal:next=>{document.querySelectorAll('dialog[open]').forEach(d=>{if(d.id!=='drive-dialog')d.close();});persist(mergeStates(next,currentState()));}});
-render();setInterval(()=>{render();if($('details').open){$('details').close();showDetails(selected);}},60000);
+render();setInterval(()=>{render();if($('details').open&&!$('delete-confirm').open){$('details').close();showDetails(selected);}},60000);
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(()=>{});
