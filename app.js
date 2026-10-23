@@ -2,7 +2,9 @@ import {todayDate,range,direction,dateLabel,timeLabel,calendarSpan,validDate,nex
 import {validateEvents,csvText} from './data.mjs';
 import {STATE_SCHEMA,validateState,fromEvents,editedState,mergeStates,signature} from './sync-state.mjs';
 import {initDriveSync} from './drive-sync.mjs';
+import {createConfirmation} from './confirmation.mjs';
 const $=id=>document.getElementById(id),KEY='milestones.state.v3',LEGACY='milestones.events.v1',UNDO='milestones.previous.v3',BACKUP='milestones.exported.v1';
+const confirmAction=createConfirmation($('action-confirm'));
 let state=fromEvents([]),events=[],editing=null,selected=null,filter='all',blocked=false,timer;
 function newId(){return crypto.randomUUID?crypto.randomUUID():Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join('');}
 function notify(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(timer);timer=setTimeout(()=>$('toast').hidden=true,6000);}
@@ -92,7 +94,7 @@ $('confirm-delete').addEventListener('click',()=>{
  try{
   const target=deleting,e=events.find(x=>x.id===target.id);
   if(!e||e.updatedAt!==target.updatedAt)throw Error('This event changed. Close and reopen its details before deleting.');
-  save(events.filter(x=>x.id!==target.id));$('delete-confirm').close();$('details').close();notify('Event deleted. Previous local state is available under Backup & Sync → Advanced recovery.');
+  save(events.filter(x=>x.id!==target.id));$('delete-confirm').close();$('details').close();notify('Event deleted. Previous local state is available under Settings → Local backups → Advanced recovery.');
  }catch(error){$('delete-confirm').close();notify('Could not delete: '+error.message);}
 });
 document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(t=>{t.classList.toggle('active',t===b);t.setAttribute('aria-pressed',String(t===b));});render();}));
@@ -103,18 +105,19 @@ function stamp(){return new Date().toISOString().replaceAll(':','-').replace(/\.
 $('export-json').addEventListener('click',()=>{try{if(blocked){download(localStorage.getItem(KEY)||localStorage.getItem(LEGACY)||'','milestones-unreadable-data.txt','text/plain');notify('Raw stored data download requested.');return;}download(JSON.stringify({app:'Milestones',schemaVersion:STATE_SCHEMA,exportedAt:new Date().toISOString(),events,deleted:state.deleted},null,2),`milestones-backup-${stamp()}.json`,'application/json');try{localStorage.setItem(BACKUP,new Date().toISOString());}catch{}render();notify('Backup download requested. Check that the file was saved.');}catch(error){$('backup-error').textContent=error.message;}});
 $('export-csv').addEventListener('click',()=>download(csvText(events),`milestones-${stamp()}.csv`,'text/csv;charset=utf-8'));
 $('import-json').addEventListener('click',()=>$('import-file').click());
-$('import-file').addEventListener('change',async evt=>{const file=evt.target.files[0];if(!file)return;try{if(file.size>20*1024*1024)throw new Error('Backup is larger than the 20 MB limit.');const incoming=validateState(JSON.parse(await file.text()));if(!confirm(`Import ${incoming.events.length} events? Missing events will be added. Newer edits and saved deletions win for matching IDs.`))return;persist(mergeStates(currentState(),incoming));$('backup-error').textContent='';notify('Backup imported. '+events.length+' events saved on this device.');}catch(error){$('backup-error').textContent='Import failed: '+error.message;}finally{evt.target.value='';}});
-$('recover-legacy').addEventListener('click',()=>{
+$('import-file').addEventListener('change',async evt=>{const file=evt.target.files[0];if(!file)return;try{if(file.size>20*1024*1024)throw new Error('Backup is larger than the 20 MB limit.');const incoming=validateState(JSON.parse(await file.text()));if(!await confirmAction({heading:'Import JSON backup?',body:`Import ${incoming.events.length} events? Missing events will be added. Newer edits and saved deletions win for matching IDs. Export your current events first if you need a separate copy.`,confirmLabel:'Import backup'}))return;persist(mergeStates(currentState(),incoming));$('backup-error').textContent='';notify('Backup imported. '+events.length+' events saved on this device.');}catch(error){$('backup-error').textContent='Import failed: '+error.message;}finally{evt.target.value='';}});
+$('recover-legacy').addEventListener('click',async()=>{
  try{
   const raw=localStorage.getItem(LEGACY);if(raw===null){$('backup-error').textContent='No older local copy was found in this browser. Import your saved JSON backup instead.';return;}
   const older=fromEvents(JSON.parse(raw)),current=currentState(),merged=mergeStates(current,older);
   if(signature(current)===signature(merged)){$('backup-error').textContent=`Older local copy checked (${older.events.length} events). No additional events to recover. If an event is still missing, import your JSON backup from the device that had it.`;return;}
-  if(!confirm(`The older local copy contains ${older.events.length} events. Current: ${current.events.length}. After merging: ${merged.events.length}.\n\nMerge this older copy? Newer edits and recorded deletions are preserved.`))return;
+  if(!await confirmAction({heading:'Recover older local events?',body:`The older local copy contains ${older.events.length} events. Current: ${current.events.length}. After merging: ${merged.events.length}.\n\nMerge this older copy? Newer edits and recorded deletions are preserved.`,confirmLabel:'Merge older events'}))return;
+  if(signature(currentState())!==signature(current))throw Error('Events changed during review. Check the older copy again before merging.');
   persist(merged);$('backup-error').textContent='';notify('Older local copy merged. Export a fresh JSON backup after checking your events.');
  }catch(error){$('backup-error').textContent='Recovery stopped: '+error.message+' Your JSON backup can be imported instead.';}
 });
-$('undo').addEventListener('click',()=>{try{const raw=localStorage.getItem(UNDO);if(raw===null)return;const previous=validateState(JSON.parse(raw));if(!confirm(`Restore the previous local state (${previous.events.length} events)? Export your current events first if needed.`))return;save(previous.events);notify('Previous local state restored.');}catch(error){$('backup-error').textContent='Restore failed: '+error.message;}});
+$('undo').addEventListener('click',async()=>{try{const raw=localStorage.getItem(UNDO);if(raw===null)return;const previous=validateState(JSON.parse(raw)),before=signature(currentState());if(!await confirmAction({heading:'Restore previous local state?',body:`Restore the previous local state (${previous.events.length} events)? This replaces the current local event list and can sync to your other devices. Export your current events first if needed.`,confirmLabel:'Restore previous state',destructive:true}))return;if(signature(currentState())!==before||localStorage.getItem(UNDO)!==raw)throw Error('Events changed during review. Open recovery again before restoring.');save(previous.events);notify('Previous local state restored.');}catch(error){$('backup-error').textContent='Restore failed: '+error.message;}});
 window.addEventListener('storage',evt=>{if(evt.key===KEY){try{if(evt.newValue===null)throw Error('Local storage removed');state=validateState(JSON.parse(evt.newValue));events=state.events;blocked=false;document.querySelectorAll('dialog[open]').forEach(d=>d.close());render();window.dispatchEvent(new Event('milestones-changed'));notify('Updated from another tab.');}catch{blocked=true;notify('Another tab wrote unreadable data. Saving has been paused.');}}});
-initDriveSync({getLocal:currentState,applyLocal:next=>{document.querySelectorAll('dialog[open]').forEach(d=>{if(d.id!=='drive-dialog')d.close();});persist(mergeStates(next,currentState()));}});
-render();setInterval(()=>{render();if($('details').open&&!$('delete-confirm').open){$('details').close();showDetails(selected);}},60000);
+initDriveSync({confirmAction,getLocal:currentState,applyLocal:next=>{document.querySelectorAll('dialog[open]').forEach(d=>{if(d.id!=='drive-dialog')d.close();});persist(mergeStates(next,currentState()));}});
+render();setInterval(()=>{render();if($('details').open&&!$('delete-confirm').open&&!$('action-confirm').open){$('details').close();showDetails(selected);}},60000);
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(()=>{});

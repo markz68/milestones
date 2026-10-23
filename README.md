@@ -1,120 +1,116 @@
-# Milestones 1.5.0
+# Milestones 1.6.0
 
-Personal milestone tracker: count down to future events and track time since past events. Responsive list with detail/edit dialogs, approximate dates, annual repeats, and Google Drive sync with optional automation.
+Milestones counts down to upcoming events and tracks time since past milestones. It is an installable, offline-capable PWA with optional Google Drive synchronization.
 
-## Events
+**App:** https://markz68.github.io/milestones/
 
-- Exact date, month/year, or year only. Unknown date components remain unknown.
-- One-time events count down before their date and up afterward.
-- Annual events with an original date retain elapsed time and the next anniversary in one entry. Original month/year is supported with approximate wording; year-only needs a known month before annual repetition can be enabled.
-- Annual holidays without an origin year store only MM-DD. February 29 uses February 28 in non-leap years, explained in the editor. Floating holidays are not supported.
-- Notes, date sources, categories, pins, search, sorting, and icons including wedding rings, Christmas, home, and travel.
-- Larger phone text, controls, and stacked event rows.
+## Everyday use
 
-## Google Drive sync
+- Use **Add event** above the timeline to create an event. Select a timeline entry to view, edit, or delete it.
+- Store an exact date, month/year, or year only. Unknown parts remain unknown and elapsed time is labeled approximate.
+- Annual events can retain an original date for birthdays and anniversaries, or repeat without an origin year for holidays such as Christmas. February 29 is observed on February 28 in non-leap years. Floating holidays are not supported.
+- Event type controls birthday/anniversary wording independently of icons and categories. Search, category filters, pins, and date/name sorting remain available.
+- The **top-right gear, labeled Settings**, opens the single Settings panel. Google Drive, Local backups, and Advanced recovery are all here. There is no duplicate Backup & Sync button at the bottom. Storage/sync status and the version remain below the timeline.
+- The Settings gear follows the shared PWA Survival Builder convention: gear only, accessible name and tooltip **Settings**, and a touch target of at least 44 × 44 pixels. Milestones retains its green theme.
 
-Version 1.4.0 adds automatic sync while the app is open and connected. Open **Google Drive sync**, keep **Automatically sync while connected** checked, and choose **Connect Google Drive** on each device using the same Google account. Sync starts after connection, about four seconds after saved edits, when you return to the app or regain internet access, and approximately once a minute while visible. Reconnect when the Google session expires or the page reloads. No credentials are saved to keep a session alive. Turn off the toggle to use only **Sync now**. The preference is saved separately on each browser/device.
+## Install on Android and Windows
 
-The OAuth Web client ID in `drive-config.mjs` is public configuration, reused from Infinity Bottle because both apps use `https://markz68.github.io`. No client secret, API key, refresh token, or access token is stored in the repository. Access tokens stay in page memory. Google Identity Services loads when the sync dialog opens. The Google Cloud project must have the Drive API enabled, the origin authorized, and any required test-user access configured. The consent screen may retain the existing project's name. No Gmail access is requested.
+1. Open the app URL in Chrome or Edge while online.
+2. On Android, use **Install app** or **Add to Home screen**, depending on the browser. On Windows, use the browser's install-app option when offered, or continue using the normal browser tab.
+3. Open once online so the service worker can cache the app shell. Existing events and local editing can then work offline. Google connection and sync require internet access.
+4. Browser profiles, private sessions, and devices can have separate local event lists. Installing the PWA does not itself back up events.
 
-Only the `drive.appdata` scope is requested. Google account information is obtained from Drive to show the connected account and bind this browser's first sync to its account ID. A different account is refused to prevent accidentally uploading one account's local events to another. Disconnect forgets this page's token and preserves local events, account binding, and cloud data. It does not revoke the shared OAuth grant or disconnect Infinity Bottle.
+## Settings: Google Drive
 
-### Merge and concurrency behavior
+Choose the gear → **Google Drive**, leave **Automatically sync while connected** checked if desired, and choose **Connect Google Drive** on each device with the same account.
 
-Milestones writes immutable, separate snapshots named `milestones-sync-v1-<uuid>.json` in the private application-data space, tagged `app=Milestones`. It never reads, modifies, or deletes Infinity Bottle files. No existing cloud snapshot is overwritten. Older snapshots are combined with the current local state on every sync. Concurrent uploads therefore remain available for the next sync instead of replacing one another. A concurrent device's changes may require another sync to appear.
+- Automatic sync checks about four seconds after saved edits, when returning to the app or regaining internet, and approximately once a minute while visible. A debounce and minimum 15-second start interval prevent duplicate requests. One sync runs per tab at a time.
+- Automatic checks wait while Settings, an editor, or a confirmation is open. Closing them resumes scheduling. **Sync now** remains available inside Settings when connected.
+- Turn off automatic sync to use only **Sync now**. The preference is stored separately per browser/device.
+- Access tokens stay only in page memory. Reconnect after reload or token expiration. Sync does not reliably run while the app is closed or suspended.
+- Temporary network errors, 429 responses, and server errors retry with increasing delays of 30 seconds to five minutes. Invalid data, denied permissions, and conflicts pause automation for attention.
+- Manual incoming merges and paused conflicts use readable in-app review dialogs. **Cancel** and Escape leave the proposed merge unapplied. Newer changes win per event, including deletion records; there is no field-by-field conflict editor.
+- Local backup/restore controls are unavailable during an active sync to avoid overlapping operations.
+- **Disconnect this session** drops this page's access token and preserves local events, account binding, and cloud data. It does not revoke the shared Google authorization.
 
-- Merge uses stable event IDs and edit timestamps. Newer changes win for the same ID.
-- Saved deletions are timestamped and sync too. A deletion wins an exact timestamp tie. Equal-time edits use a deterministic tie-break so all devices converge.
-- Different IDs remain separate, even if titles match. Independently entering the same event on two devices can produce duplicates; review before deleting an extra entry.
-- Keep device clocks correct. Timestamps advance past previously seen changes. Whole events, rather than individual fields, are merged; concurrent edits to the same event do not combine notes field-by-field.
-- Manual sync asks for confirmation before applying incoming changes. Automatic sync applies routine merges quietly, but pauses for review if the same event has changed on both devices, or for an initial nonempty merge without a previous sync baseline. The upload is read back and checked before local merged state is saved. A canceled merge or failed upload leaves local events unchanged. If local saving fails after upload, the cloud snapshot remains and the next sync can recover it.
-- Local changes arriving during upload are retained and marked as needing another sync.
-- Sync refuses malformed cloud data, incomplete listings, snapshots over 20 MB, more than 2,000 snapshots, or state exceeding 10,000 active events / 20,000 deletion records. It never prunes history automatically. Frequent use will eventually need history maintenance; export backups before any future maintenance.
+Google authorization is **In production**, as confirmed by the owner on October 21, 2026. The Testing-specific seven-day authorization limit no longer applies. Production does not provide permanent browser login. The project is shared with Infinity Bottle, but app files remain separate.
 
-Status reports the last completed check, not a guarantee that another device has no unsynced changes. Cloud snapshots consume Drive storage. They are not a substitute for independent dated backups, and can be removed through Google account/app-data management.
+### Google configuration
 
-## Backups and local data
+The public OAuth Web client ID in `drive-config.mjs` is retained, with authorized origin `https://markz68.github.io` and the Drive API enabled. Only `https://www.googleapis.com/auth/drive.appdata` is requested; no Gmail or ordinary Drive document access is requested. Google Identity Services loads when Settings opens. The repository contains no client secret, access token, or refresh token.
 
-**Export JSON on each device before your first sync.** JSON is for restoration; CSV is for viewing in Excel and escapes formula-like text. Keep dated copies outside the browser. A download request cannot verify the file was saved.
+Milestones obtains the Drive account identifier and available account email to identify the connection and bind this browser's first sync to that account. A different account is refused to prevent accidental transfer to another account. Do not replace the client ID or clear site storage as an update procedure.
 
-Schema 4 JSON includes events, date precision, annual behavior, event type, and timestamped deletion records. Schema 1, 2 and 3 backups remain importable. Update both devices to v1.3.0 before syncing; older releases cannot read schema 4 cloud snapshots and stop rather than silently discard event type. Import merges newer edits and deletions; an old backup does not silently resurrect a later deleted event. To undo a recent deletion, use **Restore previous local state**, which prompts before creating a new change restoring those events. The single undo point is replaced by the next save, import, or sync that changes local events. An unchanged automatic check leaves it intact. It is not an independent backup.
-
-The first 1.2.0 visit migrates existing events and their IDs into the atomic `milestones.state.v3` local-storage document. The older `milestones.events.v1` copy is retained but no longer updated. Do not downgrade and edit using older app versions after migration. Close older app tabs on each device. Cross-tab updates refresh the list and close editors to prevent stale saves; use one editing tab at a time.
-
-Events remain accessible offline after the app shell has been cached. Browser/site-storage clearing, profile removal, or private-mode expiry can remove local data. Installing the PWA and hosting code on GitHub do not back up events. Personal events are never committed to GitHub. Other apps on the same `markz68.github.io` origin share a browser security boundary; deploy only code you trust.
-
-## Publish and verify
-
-Serve the files at repository root using GitHub Pages, branch **main**, folder **/(root)**. `.nojekyll` bypasses Jekyll. No local build or dependency installation is needed. Check the Actions deployment result rather than assuming a successful upload has published. If no build starts, resetting the Pages publishing branch from None back to main has worked for this repository.
-
-After deployment, close old app tabs, reopen while online, and check **v1.4.0** in the footer. On each device connect the same Google account. Sync the PC first, then the phone, then the PC again. Test adding, editing and deleting a disposable event across devices. Test an offline edit followed by reconnecting and syncing. Independently exported backups should remain available throughout.
-
-Google OAuth and real phone-to-PC sync need live testing on the user's devices; mocked API tests cannot establish that the configured Google account has granted access.
-
-## Development and release history
-
-Run `node --test tests.mjs sync-tests.mjs auto-tests.mjs` for calendar dates, old/new backups, tombstones, deterministic conflicts, simultaneous first syncs, failures, pagination, verification and in-flight local edits. Serve over HTTP/HTTPS rather than `file://`. OAuth is authorized for the deployed HTTPS origin, not the local preview. Increment `CACHE` in `sw.js` when updating the app shell. Cache contains application assets only, not event backups or Google API responses.
-
-- 1.0.0: local events, precision, backup/import, CSV and offline app shell.
-- 1.1.0: phone readability and annual events with optional original dates.
-- 1.1.1: expanded event icon picker.
-- 1.2.0: manual Google Drive sync, deletion history, verified cloud snapshots and backward-compatible backup migration.
-
-- 1.2.1: fixes browser fetch context during Google connection and adds **Check older local events** under Backup & restore. Recovery merges the retained pre-sync local copy after confirmation; it never clears local storage. If the old copy is absent, import a saved JSON backup. A report of a missing phone event remains unconfirmed as to cause; no assumption is made that migration, storage clearing, or Google sync caused it.
-
-- 1.2.2: moves Add event into the timeline header and Google Drive sync / Backup & restore below the timeline near the footer, with full-width phone buttons.
-
-## Everyday improvements (1.3.0)
-
-- **Visible sync status:** bottom controls show never synced, local changes pending, sync in progress, last successful sync, and offline status. “No local changes” describes this device only; it cannot detect changes on another device until Sync now is used. Last-sync metadata changes from another tab update the summary.
-- **Event type:** General milestone, Birthday, Wedding / marriage, Other anniversary, or Holiday. Type controls wording and is independent from icon, category, and recurrence. Existing entries default to General milestone without guessing. Edit an entry to choose a type, and retain annual timing for annual countdowns. Birthday with original year shows Turning N or Turns N today; without a year, Next birthday. Wedding shows Nth wedding anniversary. Approximate months retain unknown-day wording.
-- **Category filter:** All categories, Uncategorized, and categories from your saved events. Works with All / Upcoming / Past, search, and sorting. Totals remain overall event totals. A selected category remains selected after its final event is removed, showing no matching events until another filter is selected.
-- Schema 4 preserves event type in backups and Drive snapshots and reads older schemas. The existing local storage key is retained; no data reset or second migration key is introduced. Existing schema 3 deletion history is preserved. Update all devices before syncing to prevent older clients rejecting the new schema.
-
-## Automatic sync (1.4.0)
-
-Automatic sync is enabled by default and can be disabled in the Drive panel. It requires the app to be open, visible, online, and Google-connected. It does not run on the server or reliably while the app is closed or suspended. Focus, visibility, reconnect, saved-change and periodic signals queue checks; a debounce and minimum 15-second start interval prevent duplicate requests. Only one sync runs per tab at a time. Independent tabs/devices remain safe through immutable cloud snapshots; use one editing tab per device.
-
-Temporary network errors, 429 responses and server errors retry with increasing delays of 30 seconds to five minutes. Retry schedules cannot be accelerated by focus signals. Invalid data, denied permissions, or merge conflicts pause automation and display a status requiring attention. Token expiry clears the page session and asks for reconnection; background tasks never open sign-in popups. Manual Sync now remains available for reviewing an initial merge or conflict. A canceled review leaves auto sync paused until manually resolved. Toggling off prevents queued work; an already-running request may finish.
-
-Automatic checks wait while an event editor or backup panel is open, and recheck before applying downloaded data. Local events remain unchanged if a review is required or an editor opens during network activity. No-change syncs neither write local data nor replace the undo point. Cloud snapshots are cached in memory using their Drive checksums so repeated checks download only new or changed snapshots; no cloud files are deleted. A sync that incorporates remote data creates a local undo point, as before.
-
-Same-event conflict detection compares local and cloud records with the previous successful sync baseline, including deletions. Independent event edits merge without a prompt. Conflict review still uses the documented newer-change-wins merge; it does not provide field-by-field reconciliation. Different IDs remain separate. Keep JSON backups.
-
-All existing schema 4 data, account bindings, event IDs, and backups remain compatible. No schema or local-storage migration is introduced in 1.4.0. Changes to Infinity Bottle are outside this release.
-
-Validation includes scheduler timing, retries, expiry/editor deferral, conflict pauses, unchanged-sync undo preservation, immutable-snapshot caching, and the existing date/backup/merge tests. Live Google authentication and device-to-device behavior must also be checked on the user's devices after deployment.
-
-
-## Production authorization preparation (1.4.1)
-
-Public information pages for the shared Google authorization project:
+Shared authorization information pages:
 
 - Homepage: https://markz68.github.io/milestones/about.html
-- Privacy policy: https://markz68.github.io/milestones/privacy.html
+- Privacy: https://markz68.github.io/milestones/privacy.html
 - Terms: https://markz68.github.io/milestones/terms.html
 
-These pages describe both Milestones and Infinity Bottle. The Milestones footer and Drive dialog link to the disclosures. Sync behavior and existing event storage are unchanged. The release does not change Google's publishing status.
+### Merge and concurrency
 
-In the existing Google Cloud project (project number 694239144470), open Google Auth Platform:
+Milestones appends immutable `milestones-sync-v1-<uuid>.json` snapshots tagged `app=Milestones` in private Drive application-data storage. Every snapshot participates in future merges; no existing cloud snapshot is overwritten or deleted. Infinity Bottle files are not read or modified. A concurrent device's changes can need another pass to appear.
 
-1. Branding: review the existing app name, support email, developer contact, and public links above. Use contact addresses you monitor. Avoid renaming an existing project solely to match one app because authorization is shared.
-2. Data Access: confirm the apps' requested Drive permission is `https://www.googleapis.com/auth/drive.appdata`. Do not add broad Drive scopes for production. Review any other clients/scopes in the project before removing anything.
-3. Clients: preserve the existing Web client ID and authorized origin `https://markz68.github.io`. Do not create a replacement client, add a client secret to the apps, or change storage keys.
-4. Audience: review the current External / Testing status and select Publish app when the console's prerequisites are satisfied. Follow any Branding or Verification Center issues actually shown. Publishing and brand verification are separate. A homepage/privacy/terms page alone does not guarantee approval or domain verification.
-5. Confirm the console explicitly shows In production. Then reconnect using the same Google account on each device and test both apps with backups available. Do not delete cloud data to change publishing status.
+Stable event IDs and edit timestamps determine the merge. Deletion wins an exact timestamp tie; equal-time edits use a deterministic tie-break. Different IDs remain separate even when names match. Keep device clocks accurate and avoid independently entering the same event on multiple devices.
 
-Production removes the Testing-specific seven-day authorization expiry and the need to pre-list test users. It does not provide permanent browser access tokens or closed-app sync. Milestones still reconnects after reload/expiry; Infinity Bottle still uses manual sync and currently explicitly requests consent when Connect is pressed. Infinity Bottle's Disconnect revokes the shared Google grant, so it can also affect Milestones authorization. That behavior is unchanged by this release.
+Uploads are downloaded again and verified before a changed local state is saved. Failures or canceled merges preserve local events. If local saving fails after upload, the cloud snapshot remains recoverable on a later sync. Edits arriving during upload are retained and may need a further pass. Unchanged sync checks do not replace the local undo point.
 
-Console settings and verification cannot be inferred from repository deployment. As of preparation, this environment could not open Google Cloud Console, so production publishing must be completed and verified separately in the account's console.
+Limits: 20 MB per snapshot/import, 2,000 cloud snapshots, 10,000 active events, and 20,000 deletion records. Incomplete listings and malformed data stop sync. Cloud history is not pruned automatically and consumes Drive storage. Last-sync status describes the last completed check, not a guarantee that another device has no unsynced edits.
 
+## Settings: Local backups and recovery
 
-## Shared interface (1.5.0)
+**Download JSON backup** saves a restorable copy. Keep dated copies outside the browser. A download request cannot verify the file was actually saved. **Export CSV for Excel** is for viewing, not restoration; formula-like values are escaped.
 
-The top-right settings gear and the single **Backup & Sync** button below the timeline open the same panel. It groups Google Drive and Local backups, with collapsed How sync works and Advanced recovery sections. Existing JSON export/import, CSV, legacy recovery, and previous-state restore remain available. The interface shares Infinity Bottle's popup spacing, close control, button grouping and small version label while retaining Milestones' green palette.
+**Import JSON backup** validates the file and shows an in-app review before merging. Missing events are added; newer edits and saved deletions win for matching IDs. Export the current list first if a separate copy is needed. Schema 4 backups contain events, date precision, annual behavior, event types, and deletion records. Older schema 1, 2, and 3 backups remain readable. An old backup does not silently resurrect a newer deletion.
 
-Event deletion uses a white, readable confirmation dialog with the event name, date and category, an outlined Cancel button, and a red Delete event button. Cancel and Escape preserve the event; confirmed deletion retains the existing tombstone and undo behavior. The confirmed ID and edit timestamp are checked before saving.
+Expand **Local backups → Advanced recovery** for:
 
-Automatic sync waits while Backup & Sync or a deletion confirmation is open, then resumes when it closes. Manual Sync now works inside the panel. Local backup controls are inert during an active sync to prevent overlapping restore actions. No data schema, local-storage keys, account binding, or cloud merge rules change.
+- **Check older local events:** previews a merge from the retained pre-sync browser copy. Newer edits and deletion records are preserved. If the copy is absent, import a saved JSON backup instead.
+- **Restore previous local state:** reviews replacement of the current event list with the single previous local state. The restore creates newer edits/deletions that can sync. The undo point is replaced by the next save, import, or sync that changes events; unchanged checks leave it intact. It is not an independent backup.
 
-Google publishing status was changed to **In production** and successful syncing was confirmed by the owner on October 21, 2026. The earlier preparation notes describe the state before that manual console step. Access tokens still require reconnection after reload or expiry; production does not add persistent login.
+Deletion, import, restore, recovery, and sync reviews use in-app dialogs with explicit Cancel and action buttons. Escape cancels. Cross-tab changes close outstanding dialogs; restore and legacy recovery also recheck for changes during review. Event deletion shows the event name, date, and category before confirmation.
+
+## Storage and data preservation
+
+The current document remains at `milestones.state.v3` with schema 4. The retained legacy key is `milestones.events.v1`; the undo key is `milestones.previous.v3`. Google account binding, last-sync metadata, and automatic-sync preference keys are unchanged. Version 1.6.0 performs no data migration or reset.
+
+Clearing site data, removing browser profiles, or private-session expiry can remove local events. Other apps at `markz68.github.io` share a browser security boundary and may also be affected by site-data clearing. Personal events are not committed to GitHub. Export backups before uninstalling or removing site storage. Use one editing tab per device and close old app tabs after upgrades.
+
+## Updates and troubleshooting
+
+After an update, close all Milestones windows/tabs, including installed app windows, then reopen online and check the footer for **v1.6.0**. The new service worker may wait for older app windows to close. On Windows, refreshing the online browser page can also retrieve the latest files. Do not clear site storage or uninstall to force an update.
+
+Only Milestones app-shell caches are replaced; local event storage and unrelated app caches are not cleared. The cache is `milestones-shell-v1.6.0` and includes the new confirmation module. Google API responses and event backups are not cached by the service worker. Network failures fall back to cached app assets.
+
+If sync fails, read Settings' status, confirm internet access and the original Google account, then reconnect or use Sync now as directed. Export JSON before any recovery action. Mocked tests cannot verify live Google consent or real device-to-device operation.
+
+## Android and Windows release checklist
+
+Run on **both** devices:
+
+- Confirm v1.6.0, existing event totals, dates, categories, and notes after reopening online.
+- Check one top-right Settings gear and no bottom Backup & Sync button. Open/close Settings using the gear and close control; on Windows also check keyboard navigation and Escape.
+- Confirm Drive controls, automatic-sync preference, JSON export/import, CSV, and collapsed Advanced recovery are accessible. Download JSON and verify the saved file. Cancel an import/restore review to confirm nothing changes.
+- Add a disposable event. Open Delete and cancel; confirm it remains. Then delete it through the in-app confirmation.
+- Connect the original Google account on both devices. Close Settings and test addition, edit, and deletion propagation. Verify manual Sync now still works inside Settings. Do not expect an existing page-memory session to survive a reload.
+- After opening online, go offline and reopen the app. Verify existing events are visible and an edit is saved locally; reconnect, close Settings, and verify sync resumes.
+- Check Android touch targets, panel scrolling, and portrait display. On Windows, check Tab/Shift+Tab, visible focus, Escape cancellation, and readable dialogs.
+
+## Development and deployment
+
+Stable root files are served by GitHub Pages from **main / (root)**; `.nojekyll` bypasses Jekyll. No build or dependency installation is required. Public code is separate from each user's local/Drive records.
+
+Run `node --test tests.mjs sync-tests.mjs auto-tests.mjs` and JavaScript syntax checks. Tests cover calendar handling, old/new backups, tombstones, concurrency, cloud verification/failures, and scheduler timing/retry behavior. Browser QA covers Settings access, confirmations, and local event actions. Android/Windows installation, live Google authorization, and cross-device behavior require the device checklist above.
+
+Increment the displayed semantic version, README, and service-worker cache together. Verify the GitHub commit and Pages deployment separately. Do not assume a successful commit means deployment has finished.
+
+## Release history
+
+- **1.6.0:** PWA Survival Builder compliance: gear-only Settings entry, redundant bottom button removed, in-app import/recovery/sync confirmations, stale-review safeguards, and refreshed documentation. Existing data keys, Google client configuration, and merge rules retained.
+- **1.5.0:** Combined Backup & Sync panel, Settings gear, collapsed advanced recovery, readable event deletion confirmation.
+- **1.4.1:** Shared app information, privacy, and terms pages.
+- **1.4.0:** Automatic sync while open and connected, conflict pauses, retry scheduling, and snapshot caching.
+- **1.3.0:** Event types, birthday/anniversary wording, categories, sync summary, schema 4.
+- **1.2.x:** Verified Drive sync, deletion history, legacy recovery, fetch-context fix, and timeline/data-tools layout.
+- **1.1.x:** Annual events, phone readability, and expanded icons.
+- **1.0.0:** Local events, date precision, backup/import, CSV, and offline app shell.
