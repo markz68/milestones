@@ -44,3 +44,17 @@ export function syncOverview(state,last,online=true){
  const when=new Date(last.at).toLocaleString();
  return offline+(signature(validateState(state))===last.signature?'No local changes since last sync':'Local changes need syncing')+' · Last synced '+when;
 }
+
+
+// Compact header uses current connection state, not a stale last-sync timestamp alone.
+export function headerSyncStatus({state,last,online=true,connected=false,enabled=true,busy=false,activity='',review=false,problem='',reconnectNeeded=false}){
+ if(!online)return 'Offline · changes kept locally';
+ if(busy)return activity||'Syncing…';
+ if(review)return 'Needs review · open Google Drive Sync';
+ if(!connected)return reconnectNeeded?'Reconnect required':'Not connected';
+ if(problem)return problem;
+ if(!last||!Number.isFinite(Date.parse(last.at)))return enabled?'Connected · ready to sync':'Connected · automatic sync off';
+ if(signature(validateState(state))!==last.signature)return enabled?'Changes waiting to sync':'Changes waiting · automatic sync off';
+ const when=new Date(last.at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+ return 'Synced '+when+(enabled?'':' · automatic sync off');
+}

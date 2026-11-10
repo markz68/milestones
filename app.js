@@ -3,6 +3,7 @@ import {validateEvents,csvText} from './data.mjs';
 import {STATE_SCHEMA,validateState,fromEvents,editedState,mergeStates,signature} from './sync-state.mjs';
 import {initDriveSync} from './drive-sync.mjs';
 import {createConfirmation} from './confirmation.mjs';
+import {initSettings} from './settings.mjs';
 const $=id=>document.getElementById(id),KEY='milestones.state.v3',LEGACY='milestones.events.v1',UNDO='milestones.previous.v3',BACKUP='milestones.exported.v1';
 const confirmAction=createConfirmation($('action-confirm'));
 let state=fromEvents([]),events=[],editing=null,selected=null,filter='all',blocked=false,timer;
@@ -94,7 +95,7 @@ $('confirm-delete').addEventListener('click',()=>{
  try{
   const target=deleting,e=events.find(x=>x.id===target.id);
   if(!e||e.updatedAt!==target.updatedAt)throw Error('This event changed. Close and reopen its details before deleting.');
-  save(events.filter(x=>x.id!==target.id));$('delete-confirm').close();$('details').close();notify('Event deleted. Previous local state is available under Settings → Local backups → Advanced recovery.');
+  save(events.filter(x=>x.id!==target.id));$('delete-confirm').close();$('details').close();notify('Event deleted. Previous local state is available under Settings → Backup & Export → Advanced recovery.');
  }catch(error){$('delete-confirm').close();notify('Could not delete: '+error.message);}
 });
 document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(t=>{t.classList.toggle('active',t===b);t.setAttribute('aria-pressed',String(t===b));});render();}));
@@ -118,6 +119,7 @@ $('recover-legacy').addEventListener('click',async()=>{
 });
 $('undo').addEventListener('click',async()=>{try{const raw=localStorage.getItem(UNDO);if(raw===null)return;const previous=validateState(JSON.parse(raw)),before=signature(currentState());if(!await confirmAction({heading:'Restore previous local state?',body:`Restore the previous local state (${previous.events.length} events)? This replaces the current local event list and can sync to your other devices. Export your current events first if needed.`,confirmLabel:'Restore previous state',destructive:true}))return;if(signature(currentState())!==before||localStorage.getItem(UNDO)!==raw)throw Error('Events changed during review. Open recovery again before restoring.');save(previous.events);notify('Previous local state restored.');}catch(error){$('backup-error').textContent='Restore failed: '+error.message;}});
 window.addEventListener('storage',evt=>{if(evt.key===KEY){try{if(evt.newValue===null)throw Error('Local storage removed');state=validateState(JSON.parse(evt.newValue));events=state.events;blocked=false;document.querySelectorAll('dialog[open]').forEach(d=>d.close());render();window.dispatchEvent(new Event('milestones-changed'));notify('Updated from another tab.');}catch{blocked=true;notify('Another tab wrote unreadable data. Saving has been paused.');}}});
+initSettings();
 initDriveSync({confirmAction,getLocal:currentState,applyLocal:next=>{document.querySelectorAll('dialog[open]').forEach(d=>{if(d.id!=='drive-dialog')d.close();});persist(mergeStates(next,currentState()));}});
 render();setInterval(()=>{render();if($('details').open&&!$('delete-confirm').open&&!$('action-confirm').open){$('details').close();showDetails(selected);}},60000);
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(()=>{});

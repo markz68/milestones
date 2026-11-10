@@ -1,5 +1,6 @@
 import {validateState,signature,mergeStates,fromEvents} from './sync-state.mjs';
 export const PREFIX='milestones-sync-v1-';
+export const BACKUP_PREFIX='milestones-backup-v1-';
 const API='https://www.googleapis.com/drive/v3/';
 export class DriveStore{
  constructor(token,fetcher=(...args)=>globalThis.fetch(...args)){this.token=token;this.fetcher=fetcher;this.cache=new Map();}
@@ -8,20 +9,28 @@ export class DriveStore{
   if(!r.ok){const e=Error(r.status===401?'Google session expired. Connect again.':r.status===403?'Google denied access. Check the Drive API and account permissions.':`Google Drive request failed (${r.status}). Retry Sync now.`);e.status=r.status;throw e;}return r;
  }
  async account(){const r=await this.request('about?fields=user(permissionId,emailAddress,displayName)');const j=await r.json();if(!j.user?.permissionId)throw Error('Could not identify this Google Drive account.');return j.user;}
- async list(){
+ async list({backups=false}={}){
   const files=[];let page;
   do{
-   const q="trashed = false and 'appDataFolder' in parents and name contains '"+PREFIX+"' and appProperties has { key='app' and value='Milestones' }";
-   const params=new URLSearchParams({spaces:'appDataFolder',q,pageSize:'100',fields:'nextPageToken,incompleteSearch,files(id,name,size,md5Checksum)'});if(page)params.set('pageToken',page);
+   const q="trashed = false and 'appDataFolder' in parents and name contains '"+(backups?BACKUP_PREFIX:PREFIX)+"' and appProperties has { key='app' and value='Milestones' }"+(backups?" and appProperties has { key='kind' and value='manual-backup' }":'');
+   const params=new URLSearchParams({spaces:'appDataFolder',q,pageSize:'100',fields:'nextPageToken,incompleteSearch,files(id,name,size,md5Checksum,createdTime)'});if(page)params.set('pageToken',page);
    const j=await(await this.request('files?'+params)).json();if(j.incompleteSearch||!Array.isArray(j.files))throw Error('Drive returned an incomplete file list. No local data changed.');
    files.push(...j.files);if(files.length>2000)throw Error('Cloud history needs maintenance. Export a backup and contact the app maintainer. No files were removed.');page=j.nextPageToken;
   }while(page);return files;
  }
  async read(file){if(Number(file.size)>20*1024*1024)throw Error('Cloud snapshot exceeds 20 MB.');const r=await this.request('files/'+encodeURIComponent(file.id)+'?alt=media');const raw=await r.text();if(raw.length>20*1024*1024)throw Error('Cloud snapshot exceeds 20 MB.');return validateState(JSON.parse(raw));}
  async collect(){const files=await this.list();let state=fromEvents([]);for(const file of files){const cached=this.cache.get(file.id);let data;if(file.md5Checksum&&cached?.checksum===file.md5Checksum)data=cached.state;else{data=await this.read(file);if(file.md5Checksum)this.cache.set(file.id,{checksum:file.md5Checksum,state:data});}state=mergeStates(state,data);}return {files,state};}
- async append(state){
+ async latestBackup(){
+  const files=await this.list({backups:true});if(!files.length)return null;
+  if(files.some(f=>!Number.isFinite(Date.parse(f.createdTime))))throw Error('A Drive backup has invalid creation metadata. No local data changed.');
+  files.sort((a,b)=>Date.parse(b.createdTime)-Date.parse(a.createdTime)||b.id.localeCompare(a.id));
+  return {state:await this.read(files[0]),createdAt:files[0].createdTime};
+ }
+ async append(state){return this.writeSnapshot(state,false);}
+ async appendBackup(state){return this.writeSnapshot(state,true);}
+ async writeSnapshot(state,backup){
   state=validateState(state);const boundary='milestones_'+crypto.randomUUID();
-  const meta={name:PREFIX+crypto.randomUUID()+'.json',parents:['appDataFolder'],mimeType:'application/json',appProperties:{app:'Milestones'}};
+  const meta={name:(backup?BACKUP_PREFIX:PREFIX)+crypto.randomUUID()+'.json',parents:['appDataFolder'],mimeType:'application/json',appProperties:{app:'Milestones',...(backup?{kind:'manual-backup'}:{})}};
   const body=`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(state)}\r\n--${boundary}--`;
   if(body.length>20*1024*1024)throw Error('Snapshot exceeds 20 MB.');
   const j=await(await this.request('files?uploadType=multipart&fields=id',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+boundary},body},true)).json();
