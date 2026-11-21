@@ -1,4 +1,4 @@
-# Milestones 1.7.0
+# Milestones 1.7.1
 
 Milestones counts down to upcoming events and tracks time since past milestones. It is an installable, offline-capable PWA with optional Google Drive synchronization.
 
@@ -10,7 +10,7 @@ Milestones counts down to upcoming events and tracks time since past milestones.
 - Store an exact date, month/year, or year only. Unknown parts remain unknown and elapsed time is labeled approximate.
 - Annual events can retain an original date for birthdays and anniversaries, or repeat without an origin year for holidays such as Christmas. February 29 is observed on February 28 in non-leap years. Floating holidays are not supported.
 - Event type controls birthday/anniversary wording independently of icons and categories. Search, category filters, pins, and date/name sorting remain available.
-- The **top-right Settings gear** opens a menu modeled on PTO Tracker, with **Google Drive Sync**, **Backup & Export**, and **About** cards. Each submenu has sticky **Back** and **Close** controls. Advanced local recovery remains under Backup & Export. There is no duplicate bottom button. The application header shows the title, **v1.7.0**, and current sync status.
+- The **top-right Settings gear** opens a menu modeled on PTO Tracker, with **Google Drive Sync**, **Backup & Export**, and **About** cards. Each submenu has sticky **Back** and **Close** controls. Advanced local recovery remains under Backup & Export. There is no duplicate bottom button. The application header shows the title, **v1.7.1**, and current sync status.
 - The Settings gear follows the shared PWA Survival Builder convention: gear only, accessible name and tooltip **Settings**, and a touch target of at least 44 × 44 pixels. Milestones retains its green theme.
 
 ## Install on Android and Windows
@@ -84,15 +84,15 @@ Deletion, import, restore, recovery, and sync reviews use in-app dialogs with ex
 
 ## Storage and data preservation
 
-The current document remains at `milestones.state.v3` with schema 4. The retained legacy key is `milestones.events.v1`; the undo key is `milestones.previous.v3`. Google account binding, last-sync metadata, and automatic-sync preference keys are unchanged. Version 1.7.0 performs no data migration or reset. The OAuth client ID, account binding and sync baseline keys remain unchanged.
+The current document remains at `milestones.state.v3` with schema 4. The retained legacy key is `milestones.events.v1`; the undo key is `milestones.previous.v3`. Google account binding, last-sync metadata, and automatic-sync preference keys are unchanged. Version 1.7.1 performs no data migration or reset. The OAuth client ID, account binding and sync baseline keys remain unchanged.
 
 Clearing site data, removing browser profiles, or private-session expiry can remove local events. Other apps at `markz68.github.io` share a browser security boundary and may also be affected by site-data clearing. Personal events are not committed to GitHub. Export backups before uninstalling or removing site storage. Use one editing tab per device and close old app tabs after upgrades.
 
 ## Updates and troubleshooting
 
-After an update, close all Milestones windows/tabs, including installed app windows, then reopen online and check the header for **v1.7.0**. The new service worker may wait for older app windows to close. On Windows, refreshing the online browser page can also retrieve the latest files. Do not clear site storage or uninstall to force an update.
+After an update, close all Milestones windows/tabs, including installed app windows, then reopen online and check the header for **v1.7.1**. The new service worker may wait for older app windows to close. On Windows, refreshing the online browser page can also retrieve the latest files. Do not clear site storage or uninstall to force an update.
 
-Only Milestones app-shell caches are replaced; local event storage and unrelated app caches are not cleared. The cache is `milestones-shell-v1.7.0` and includes Settings navigation, confirmation, and Drive recovery modules. Google API responses and event backups are not cached by the service worker. Network failures fall back to cached app assets.
+Only Milestones app-shell caches are replaced; local event storage and unrelated app caches are not cleared. The cache is `milestones-shell-v1.7.1` and includes Settings navigation, confirmation, and Drive recovery modules. Google API responses and event backups are not cached by the service worker. Network failures fall back to cached app assets.
 
 If sync fails, read Settings' status, confirm internet access and the original Google account, then reconnect or use Sync now as directed. Export JSON before any recovery action. Mocked tests cannot verify live Google consent or real device-to-device operation.
 
@@ -100,7 +100,7 @@ If sync fails, read Settings' status, confirm internet access and the original G
 
 Run on **both** devices:
 
-- Confirm v1.7.0, existing event totals, dates, categories, and notes after reopening online.
+- Confirm v1.7.1, existing event totals, dates, categories, and notes after reopening online.
 - Check one top-right Settings gear and no bottom Backup & Sync button. Open/close Settings using the gear and close control; on Windows also check keyboard navigation and Escape.
 - Confirm Drive controls, automatic-sync preference, JSON export/import, CSV, and Advanced recovery are accessible in the appropriate submenu. Test Back, Close, and reopening the menu at its home screen. Download JSON and verify the saved file. Cancel an import/restore review to confirm nothing changes.
 - Add a disposable event. Open Delete and cancel; confirm it remains. Then delete it through the in-app confirmation.
@@ -117,6 +117,8 @@ Run `node --test tests.mjs sync-tests.mjs auto-tests.mjs recovery-tests.mjs` and
 Increment the displayed semantic version, README, and service-worker cache together. Verify the GitHub commit and Pages deployment separately. Do not assume a successful commit means deployment has finished.
 
 ## Release history
+
+- **1.7.1:** Center the Settings gear using a fixed-size vector icon and zero button padding, avoiding Android emoji alignment differences. Updated displayed versions and offline cache; event data and sync behavior unchanged.
 
 - **1.7.0:** PTO Tracker-style Settings home and submenus with sticky Back/Close controls; title, version, and live sync status in the header; separate verified manual Drive backups and confirmed Drive restore. Existing event schema, storage keys, OAuth configuration and ordinary sync merge rules retained. Recovery and header-state tests added.
 

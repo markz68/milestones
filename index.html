@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#173f3a"><meta name="description" content="Your dates, your history. Count down to plans and keep track of life's milestones.">
-  <title>Milestones · v1.7.0</title><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="styles.css">
+  <title>Milestones · v1.7.1</title><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header><div class="brand"><span class="brand-icon" aria-hidden="true">◷</span><div class="brand-text"><strong>Milestones</strong><span class="header-version">v1.7.0</span><span id="header-sync" class="header-sync" role="status" aria-live="polite" aria-atomic="true">Not connected</span></div></div><button id="settings-open" class="icon-button" type="button" aria-label="Settings" title="Settings">⚙️</button></header>
+  <header><div class="brand"><span class="brand-icon" aria-hidden="true">◷</span><div class="brand-text"><strong>Milestones</strong><span class="header-version">v1.7.1</span><span id="header-sync" class="header-sync" role="status" aria-live="polite" aria-atomic="true">Not connected</span></div></div><button id="settings-open" class="icon-button" type="button" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 2 14 2 14.6 4.4 16.4 5.4 18.8 4.7 20.8 8.2 19 9.9 19 12.1 20.8 13.8 18.8 17.3 16.4 16.6 14.6 17.6 14 20 10 20 9.4 17.6 7.6 16.6 5.2 17.3 3.2 13.8 5 12.1 5 9.9 3.2 8.2 5.2 4.7 7.6 5.4 9.4 4.4 10 2Z" transform="translate(0 1)"/><circle cx="12" cy="12" r="3.2"/></svg></button></header>
   <main>
     <section class="intro"><p class="eyebrow" id="today"></p><h1>A little perspective<br>on the days that matter.</h1><p>Look forward to what’s next. Remember how far you’ve come.</p></section>
     <section class="stats" aria-label="Event totals"><div><span id="count-all">0</span><small>Saved events</small></div><div><span id="count-upcoming">0</span><small>Upcoming / current</small></div><div><span id="count-past">0</span><small>Past milestones</small></div></section>
@@ -18,7 +18,7 @@
       <p id="no-results" hidden>No matching events. Try a different search or filter.</p>
     </section>
     <aside class="save-note"><span aria-hidden="true">↧</span><p><strong>Your history belongs to you.</strong> Events save in this browser. Use Google Drive sync to share changes between devices, and keep exporting separate backups.</p></aside>
-    <footer><span>Milestones · v1.7.0</span><span><a href="about.html">About</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></span><span id="backup-status">No backup exported yet</span></footer>
+    <footer><span>Milestones · v1.7.1</span><span><a href="about.html">About</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></span><span id="backup-status">No backup exported yet</span></footer>
   </main>
   <dialog id="editor"><form id="event-form"><div class="dialog-head"><div><p class="eyebrow">A DATE WORTH KEEPING</p><h2 id="editor-title">Add an event</h2></div><button type="button" class="close" data-close aria-label="Close">×</button></div>
     <label>Event name<input id="title" required maxlength="120" placeholder="Adopted our dog"></label>
@@ -61,7 +61,7 @@
     </section>
     <section data-settings-page="about" class="settings-page" hidden>
       <h3>Milestones</h3><p>Your dates. Your history. Track time before and since important events, including birthdays, anniversaries, trips and home projects.</p>
-      <h3>Version</h3><p>v1.7.0</p><h3>Dates and recurring events</h3><p>Exact dates, month/year, year only, and annual holidays are supported. Unknown date parts remain approximate. February 29 uses February 28 in non-leap years.</p>
+      <h3>Version</h3><p>v1.7.1</p><h3>Dates and recurring events</h3><p>Exact dates, month/year, year only, and annual holidays are supported. Unknown date parts remain approximate. February 29 uses February 28 in non-leap years.</p>
       <h3>Your data</h3><p>Events stay in this browser until you export them or connect Google Drive. Installing the app does not back up its records. Offline editing works after the app has loaded online; Google sync requires an active connection.</p>
       <p><a href="about.html">About the apps</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p>
     </section>
