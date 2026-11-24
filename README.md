@@ -4,7 +4,7 @@ Milestones counts down to upcoming events and tracks time since past milestones.
 
 **Live app:** https://markz68.github.io/milestones/
 
-**Version:** v1.7.2
+**Version:** v1.7.3
 
 ## Features
 
@@ -89,15 +89,15 @@ Deletion, import, restore, recovery, and sync reviews use in-app dialogs with ex
 
 ## Storage and data preservation
 
-The current document remains at `milestones.state.v3` with schema 4. The retained legacy key is `milestones.events.v1`; the undo key is `milestones.previous.v3`. Google account binding, last-sync metadata, and automatic-sync preference keys are unchanged. Version 1.7.2 performs no data migration or reset. The OAuth client ID, account binding and sync baseline keys remain unchanged.
+The current document remains at `milestones.state.v3` with schema 4. The retained legacy key is `milestones.events.v1`; the undo key is `milestones.previous.v3`. Google account binding, last-sync metadata, and automatic-sync preference keys are unchanged. Version 1.7.3 performs no data migration or reset. The OAuth client ID, account binding and sync baseline keys remain unchanged.
 
 Clearing site data, removing browser profiles, or private-session expiry can remove local events. Other apps at `markz68.github.io` share a browser security boundary and may also be affected by site-data clearing. Personal events are not committed to GitHub. Export backups before uninstalling or removing site storage. Use one editing tab per device and close old app tabs after upgrades.
 
 ## Updates and troubleshooting
 
-After an update, close all Milestones windows/tabs, including installed app windows, then reopen online and check the header for **v1.7.2**. The new service worker may wait for older app windows to close. On Windows, refreshing the online browser page can also retrieve the latest files. Do not clear site storage or uninstall to force an update.
+After an update, close all Milestones windows/tabs, including installed app windows, then reopen online and check the header for **v1.7.3**. The new service worker may wait for older app windows to close. On Windows, refreshing the online browser page can also retrieve the latest files. Do not clear site storage or uninstall to force an update.
 
-Only Milestones app-shell caches are replaced; local event storage and unrelated app caches are not cleared. The cache is `milestones-shell-v1.7.2` and includes Settings navigation, confirmation, and Drive recovery modules. Google API responses and event backups are not cached by the service worker. Network failures fall back to cached app assets.
+Only Milestones app-shell caches are replaced; local event storage and unrelated app caches are not cleared. The cache is `milestones-shell-v1.7.3` and includes Settings navigation, confirmation, and Drive recovery modules. Google API responses and event backups are not cached by the service worker. Network failures fall back to cached app assets.
 
 If sync fails, read Settings' status, confirm internet access and the original Google account, then reconnect or use Sync now as directed. Export JSON before any recovery action. Mocked tests cannot verify live Google consent or real device-to-device operation.
 
@@ -105,7 +105,7 @@ If sync fails, read Settings' status, confirm internet access and the original G
 
 Run on **both** devices:
 
-- Confirm v1.7.2, existing event totals, dates, categories, and notes after reopening online.
+- Confirm v1.7.3, existing event totals, dates, categories, and notes after reopening online.
 - Check one top-right Settings gear and no bottom Backup & Sync button. Open/close Settings using the gear and close control; on Windows also check keyboard navigation and Escape.
 - Confirm Drive controls, automatic-sync preference, JSON export/import, CSV, and Advanced recovery are accessible in the appropriate submenu. Test Back, Close, and reopening the menu at its home screen. Download JSON and verify the saved file. Cancel an import/restore review to confirm nothing changes.
 - Add a disposable event. Open Delete and cancel; confirm it remains. Then delete it through the in-app confirmation.
@@ -123,6 +123,7 @@ Increment the displayed semantic version, README, and service-worker cache toget
 
 ## Release history
 
+- **1.7.3:** Made the Google Drive status readable in both themes and matched the plain status line used in Infinity Bourbon.
 - **1.7.2:** Matched the shared Backup & Restore dialog and Settings theme choices, kept advanced recovery, and standardized JSON export names. Uses the existing event and Drive formats.
 - **1.7.1:** Center the Settings gear using a fixed-size vector icon and zero button padding, avoiding Android emoji alignment differences. Updated displayed versions and offline cache; event data and sync behavior unchanged.
 
