@@ -54,3 +54,45 @@ header .icon-button{background:transparent;color:#fff;border-color:#66877b;borde
 
 /* Fixed vector geometry avoids platform-dependent emoji alignment. */
 #settings-open{display:grid;place-items:center;padding:0;line-height:0}#settings-open svg{display:block;width:25px;height:25px;pointer-events:none}
+
+/* Shared Backup & Restore dialog, in the Milestones palette. */
+.shared-backup{width:min(94vw,520px);max-width:none;max-height:min(88dvh,760px);padding:0;border-radius:19px;overflow:hidden}
+.shared-backup-content{padding:24px;max-height:min(88dvh,758px);overflow-y:auto}
+.shared-backup-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.shared-backup-header h2{font:500 25px Georgia,serif;margin:3px 0 12px}
+#backup-close{width:40px;height:40px;flex-shrink:0;border-radius:12px;padding:0;font-size:25px;line-height:1;background:#f1f5ef}
+.shared-backup-group{padding:16px 0;border-top:1px solid var(--line)}
+.shared-backup-group h3{font:700 14px system-ui,sans-serif;margin:0 0 12px}
+.shared-backup-group p{margin:0 0 12px}
+.shared-backup-group p:empty{display:none}
+.shared-stack{display:grid;gap:9px}
+.shared-stack button{width:100%;padding:12px 14px;border-radius:12px;font-size:13px;font-weight:700}
+.shared-footer{position:sticky;bottom:-20px;background:white;text-align:center;margin:18px 0 0;padding:10px 0}
+.shared-footer button{border-radius:12px;font-weight:700}
+.shared-backup .shared-footer{bottom:-24px;margin-top:10px}
+.themeOptions{border:1px solid var(--line);border-radius:12px;margin:4px 0 0;padding:4px 14px}
+.themeOptions legend{font-weight:700;padding:0 6px}
+.themeOptions label{display:flex;align-items:center;gap:10px;min-height:40px;font-size:14px}
+.themeOptions input{accent-color:#426b54}
+#theme-status:empty{display:none}
+@media(max-width:420px){.shared-backup-content{padding:20px}.shared-backup .shared-footer{bottom:-20px}}
+
+:root[data-theme="light"]{color-scheme:light}
+:root[data-theme="dark"]{color-scheme:dark;background:#151e19;color:#e6eee7;--green:#b5e1c7;--muted:#b1c6bb;--line:#43574c}
+[data-theme="dark"] .workspace,[data-theme="dark"] dialog,[data-theme="dark"] .settings-top,
+[data-theme="dark"] .shared-footer{background:#202c25;color:#e6eee7}
+[data-theme="dark"] button,[data-theme="dark"] .backup-advanced,[data-theme="dark"] .confirm-record,
+[data-theme="dark"] .tabs,[data-theme="dark"] .event-icon,[data-theme="dark"] #backup-close,
+[data-theme="dark"] input:not([type=checkbox]):not([type=radio]),[data-theme="dark"] select,
+[data-theme="dark"] textarea{background:#29392f;color:#e6eee7;border-color:var(--line)}
+[data-theme="dark"] button:hover,[data-theme="dark"] .tabs button.active{background:#354a3d;color:#fff}
+[data-theme="dark"] button.primary{background:#376851;border-color:#5b9a7c;color:#fff}
+[data-theme="dark"] button.danger-button{background:#9b3535;color:#fff}
+[data-theme="dark"] .event-row{border-bottom-color:var(--line)}
+[data-theme="dark"] .eyebrow,[data-theme="dark"] .pin,[data-theme="dark"] #detail-content .big-time{color:#f1cc8c}
+[data-theme="dark"] .next-occurrence{color:#b5e1c7!important}
+[data-theme="dark"] .settings-menu-text small,[data-theme="dark"] .settings-menu-icon,
+[data-theme="dark"] .confirm-record span{color:var(--muted)}
+[data-theme="dark"] .form-error,[data-theme="dark"] .danger{color:#ffbbbb}
+[data-theme="dark"] #toast{background:#355446}
+#backup-error:empty{display:none}

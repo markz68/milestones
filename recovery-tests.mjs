@@ -60,3 +60,15 @@ test('Header never calls pending, offline, disconnected or conflicted records sy
  assert.match(headerSyncStatus({...base,online:false}),/^Offline/);assert.match(headerSyncStatus({...base,busy:true,activity:'Backing up…'}),/^Backing up/);assert.match(headerSyncStatus({...base,review:true}),/Needs review/);
  assert.match(headerSyncStatus({...base,state:fromEvents([])}),/^Changes waiting/);assert.match(headerSyncStatus({...base,enabled:false}),/automatic sync off/);
 });
+
+test('An empty installation cannot create a recovery copy ahead of populated Drive history', async()=>{
+ const empty=fromEvents([]), populated=fromEvents([event('cloud')]);
+ for(const options of [
+  {local:empty,source:populated,cloud:empty},
+  {local:empty,manual:false,cloud:populated},
+ ]){
+  const x=setup(options);
+  await assert.rejects(backupDevice({...x,confirm:async()=>assert.fail('No confirmation expected')}),/device is empty/);
+  assert.equal(x.backups.length,0);
+ }
+});

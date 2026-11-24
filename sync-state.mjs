@@ -50,7 +50,7 @@ export function syncOverview(state,last,online=true){
 export function headerSyncStatus({state,last,online=true,connected=false,enabled=true,busy=false,activity='',review=false,problem='',reconnectNeeded=false}){
  if(!online)return 'Offline · changes kept locally';
  if(busy)return activity||'Syncing…';
- if(review)return 'Needs review · open Google Drive Sync';
+ if(review)return 'Needs review · open Backup & Restore';
  if(!connected)return reconnectNeeded?'Reconnect required':'Not connected';
  if(problem)return problem;
  if(!last||!Number.isFinite(Date.parse(last.at)))return enabled?'Connected · ready to sync':'Connected · automatic sync off';

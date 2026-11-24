@@ -22,7 +22,7 @@ export function initDriveSync({getLocal,applyLocal,confirmAction}){
   }catch{$('sync-overview').textContent='Sync status unavailable · Open Settings for details';$('header-sync').textContent='Storage needs attention';}
  }
  const status=(s,summary=null)=>{$('drive-status').textContent=s;refreshOverview(summary);};
- const buttons=()=>{$('drive-connect').disabled=busy;$('drive-connect').textContent=token||reconnectNeeded?'Reconnect Google Drive':'Connect Google Drive';for(const id of ['drive-now','drive-backup','drive-restore','drive-disconnect'])$(id).disabled=busy||!token;$('drive-auto').disabled=busy;$('backups').inert=busy;refreshOverview();};
+ const buttons=()=>{$('drive-connect').disabled=busy;$('drive-connect').textContent=token||reconnectNeeded?'Reconnect Google Drive':'Connect Google Drive';for(const id of ['drive-now','drive-backup','drive-restore','drive-disconnect'])$(id).disabled=busy||!token;$('drive-auto').disabled=busy;$('backups').inert=$('backup-recovery').inert=busy;$('drive-connect').hidden=!!token;$('drive-actions').hidden=!token;refreshOverview();};
  function forgetSession(){token=null;account=null;store=null;client=null;expires=0;$('drive-account').textContent='Not connected';buttons();}
  function expireSession(){if(token&&Date.now()>=expires){reconnectNeeded=true;forgetSession();status('Google session expired. Connect again to resume syncing. Local edits are preserved.','Reconnect to sync');return true;}return false;}
  const auto=createAutoSync({run:()=>performSync(true),canRun:()=>!!(token&&Date.now()<expires&&!busy&&navigator.onLine&&!document.hidden&&!editing(true))});
@@ -42,9 +42,8 @@ export function initDriveSync({getLocal,applyLocal,confirmAction}){
    s.onerror=()=>{clearTimeout(t);fail('Google sign-in could not load. Local events remain available.');};document.head.append(s);
   });return loading;
  }
- $('drive-dialog').addEventListener('settings-section',event=>{
-  if(event.detail.section!=='drive')return;
-  expireSession();refreshOverview();$('drive-connect').disabled=true;
+ $('backup-tools').addEventListener('milestones-backup-open',()=>{
+  expireSession();refreshOverview();if(token)return;$('drive-connect').disabled=true;
   loadGoogle().then(buttons).catch(e=>{status(e.message);$('drive-connect').disabled=true;});
  });
  $('drive-auto').addEventListener('change',()=>{
@@ -75,7 +74,7 @@ export function initDriveSync({getLocal,applyLocal,confirmAction}){
  });
  $('drive-disconnect').addEventListener('click',()=>{
   // Do not revoke the shared OAuth grant: Infinity Bottle uses the same client.
-  auto.cancel();reconnectNeeded=false;syncProblem='';forgetSession();status('Disconnected on this device. Local events and cloud snapshots are preserved.');
+  auto.cancel();reconnectNeeded=false;syncProblem='';forgetSession();status('Google Drive is disconnected.');
  });
  async function performSync(automatic=false){
   if(busy)return {retry:true};

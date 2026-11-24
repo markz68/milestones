@@ -3,6 +3,12 @@ const unchanged=(getLocal,before)=>signature(validateState(getLocal()))===signat
 function ready(canApply){if(!canApply())throw Error('Finish editing before using Drive backup or restore.');}
 export async function backupDevice({store,getLocal,confirm,canApply=()=>true}){
  ready(canApply);const before=validateState(getLocal());
+ if(!before.events.length&&!before.deleted.length){
+  const [backup,cloud]=await Promise.all([store.latestBackup(),store.collect()]);
+  if(backup?.state.events.length||cloud.state.events.length){
+   throw Error('This device is empty. Choose Restore from Google Drive to retrieve your events.');
+  }
+ }
  if(!await confirm(before))return {canceled:true};
  ready(canApply);if(!unchanged(getLocal,before))throw Error('Local events changed during review. Start the backup again.');
  await store.appendBackup(before);

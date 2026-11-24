@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#173f3a"><meta name="description" content="Your dates, your history. Count down to plans and keep track of life's milestones.">
-  <title>Milestones · v1.7.1</title><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="styles.css">
+  <title>Milestones · v1.7.2</title><link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="styles.css?v=1.7.2"><script src="theme.js?v=1.7.2"></script>
 </head>
 <body>
-  <header><div class="brand"><span class="brand-icon" aria-hidden="true">◷</span><div class="brand-text"><strong>Milestones</strong><span class="header-version">v1.7.1</span><span id="header-sync" class="header-sync" role="status" aria-live="polite" aria-atomic="true">Not connected</span></div></div><button id="settings-open" class="icon-button" type="button" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 2 14 2 14.6 4.4 16.4 5.4 18.8 4.7 20.8 8.2 19 9.9 19 12.1 20.8 13.8 18.8 17.3 16.4 16.6 14.6 17.6 14 20 10 20 9.4 17.6 7.6 16.6 5.2 17.3 3.2 13.8 5 12.1 5 9.9 3.2 8.2 5.2 4.7 7.6 5.4 9.4 4.4 10 2Z" transform="translate(0 1)"/><circle cx="12" cy="12" r="3.2"/></svg></button></header>
+  <header><div class="brand"><span class="brand-icon" aria-hidden="true">◷</span><div class="brand-text"><strong>Milestones</strong><span class="header-version">v1.7.2</span><span id="header-sync" class="header-sync" role="status" aria-live="polite" aria-atomic="true">Not connected</span></div></div><button id="settings-open" class="icon-button" type="button" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 2 14 2 14.6 4.4 16.4 5.4 18.8 4.7 20.8 8.2 19 9.9 19 12.1 20.8 13.8 18.8 17.3 16.4 16.6 14.6 17.6 14 20 10 20 9.4 17.6 7.6 16.6 5.2 17.3 3.2 13.8 5 12.1 5 9.9 3.2 8.2 5.2 4.7 7.6 5.4 9.4 4.4 10 2Z" transform="translate(0 1)"/><circle cx="12" cy="12" r="3.2"/></svg></button></header>
   <main>
     <section class="intro"><p class="eyebrow" id="today"></p><h1>A little perspective<br>on the days that matter.</h1><p>Look forward to what’s next. Remember how far you’ve come.</p></section>
     <section class="stats" aria-label="Event totals"><div><span id="count-all">0</span><small>Saved events</small></div><div><span id="count-upcoming">0</span><small>Upcoming / current</small></div><div><span id="count-past">0</span><small>Past milestones</small></div></section>
@@ -18,7 +18,7 @@
       <p id="no-results" hidden>No matching events. Try a different search or filter.</p>
     </section>
     <aside class="save-note"><span aria-hidden="true">↧</span><p><strong>Your history belongs to you.</strong> Events save in this browser. Use Google Drive sync to share changes between devices, and keep exporting separate backups.</p></aside>
-    <footer><span>Milestones · v1.7.1</span><span><a href="about.html">About</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></span><span id="backup-status">No backup exported yet</span></footer>
+    <footer><span>Milestones · v1.7.2</span><span><a href="about.html">About</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></span><span id="backup-status">No backup exported yet</span></footer>
   </main>
   <dialog id="editor"><form id="event-form"><div class="dialog-head"><div><p class="eyebrow">A DATE WORTH KEEPING</p><h2 id="editor-title">Add an event</h2></div><button type="button" class="close" data-close aria-label="Close">×</button></div>
     <label>Event name<input id="title" required maxlength="120" placeholder="Adopted our dog"></label>
@@ -41,30 +41,64 @@
   <dialog id="drive-dialog" class="backup-dialog settings-dialog" aria-labelledby="backup-title">
     <div class="settings-top"><button id="settings-back" class="settings-back" type="button" hidden>‹ Back</button><h2 id="backup-title">Settings</h2><button type="button" class="close" data-close aria-label="Close Settings">×</button></div>
     <div id="settings-home" class="settings-home">
-      <button type="button" class="settings-menu-item" data-settings-section="drive"><span class="settings-menu-icon" aria-hidden="true">☁</span><span class="settings-menu-text"><strong>Google Drive Sync</strong><small>Connection, sync and Drive backup</small></span><span aria-hidden="true">›</span></button>
-      <button type="button" class="settings-menu-item" data-settings-section="backup"><span class="settings-menu-icon" aria-hidden="true">⇩</span><span class="settings-menu-text"><strong>Backup &amp; Export</strong><small>JSON restore, backup and CSV</small></span><span aria-hidden="true">›</span></button>
+      <button type="button" class="settings-menu-item" id="open-backup"><span class="settings-menu-icon" aria-hidden="true">⇩</span><span class="settings-menu-text"><strong>Backup &amp; Restore</strong><small>JSON, CSV and Google Drive</small></span><span aria-hidden="true">›</span></button>
       <button type="button" class="settings-menu-item" data-settings-section="about"><span class="settings-menu-icon" aria-hidden="true">ⓘ</span><span class="settings-menu-text"><strong>About</strong><small>Version, dates and data storage</small></span><span aria-hidden="true">›</span></button>
+      <fieldset class="themeOptions"><legend>Theme</legend>
+<label><input type="radio" name="theme" value="system" checked> Use device setting</label>
+<label><input type="radio" name="theme" value="light"> Light</label>
+<label><input type="radio" name="theme" value="dark"> Dark</label>
+<p id="theme-status" role="status"></p>
+</fieldset>
     </div>
-    <section data-settings-page="drive" class="settings-page" hidden>
-      <h3>Google Drive backup</h3><p>Automatic sync while connected, plus manual backup and restore. Conflicting changes pause syncing for review.</p>
-      <div class="backup-options"><button id="drive-connect">Connect Google Drive</button><p id="drive-account">Not connected</p><p id="drive-status" role="status" aria-live="polite">Connect the same Google account on your devices.</p><button id="drive-now" disabled>Sync Now</button><button id="drive-backup" disabled>Back up to Google Drive</button><button id="drive-restore" disabled>Restore from Google Drive</button><button id="drive-disconnect" disabled>Disconnect Google Drive</button></div>
-      <label class="check auto-sync-choice"><input id="drive-auto" type="checkbox" checked> Automatically sync while connected</label>
-      <p class="field-hint">Automatic sync waits while Settings is open. Close Settings to resume it, or use Sync Now here. Reconnect after a reload or Google session expiry.</p>
-      <p id="sync-overview" class="field-hint">Events saved on this device.</p>
-      <details class="backup-advanced"><summary>Sync and recovery details</summary><p class="field-hint">Sync combines newer event edits and saved deletions. It checks after edits, when you return or reconnect, and about once a minute while visible. Initial merges and conflicting edits may need review. Independently created event IDs remain separate.</p><p class="field-hint">Back up creates a separate, verified recovery copy of this device. Restore uses the latest manual Drive backup, or existing sync history if no manual backup exists. Restore previews counts and replaces the local event list only after confirmation. Restored changes can then sync to other devices. Export JSON first if needed.</p><p class="field-hint">Disconnect keeps your events and cloud copies. Milestones files remain separate from PTO Tracker and Infinity Bottle. Keep dated JSON exports outside the browser too.</p></details>
-    </section>
-    <section id="backups" data-settings-page="backup" class="settings-page" hidden>
-      <h3>Backup and restore</h3><p>Your events are stored on this device. JSON import merges newer edits and saved deletions. Keep dated copies outside this browser.</p>
-      <div class="backup-options"><button id="export-json">Download JSON backup</button><button id="export-csv">Export CSV for Excel</button><button id="import-json">Import JSON backup</button><input id="import-file" type="file" accept=".json,application/json" hidden></div>
-      <details class="backup-advanced"><summary>Advanced recovery</summary><p class="field-hint">Export your current events first. These options change the local event list and can then sync to your other devices.</p><div class="backup-options"><button id="recover-legacy">Check older local events</button><button id="undo">Restore previous local state</button></div><p class="field-hint">Check older local events merges any retained pre-sync copy, preserving newer edits and deletions. Restore previous local state restores the single undo point from the last change. The next change replaces it; it is not an independent backup.</p></details>
-      <p class="form-error" id="backup-error" role="alert"></p>
-    </section>
     <section data-settings-page="about" class="settings-page" hidden>
       <h3>Milestones</h3><p>Your dates. Your history. Track time before and since important events, including birthdays, anniversaries, trips and home projects.</p>
-      <h3>Version</h3><p>v1.7.1</p><h3>Dates and recurring events</h3><p>Exact dates, month/year, year only, and annual holidays are supported. Unknown date parts remain approximate. February 29 uses February 28 in non-leap years.</p>
-      <h3>Your data</h3><p>Events stay in this browser until you export them or connect Google Drive. Installing the app does not back up its records. Offline editing works after the app has loaded online; Google sync requires an active connection.</p>
-      <p><a href="about.html">About the apps</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p>
+      <h3>Version</h3><p>v1.7.2</p><h3>Dates and recurring events</h3><p>Exact dates, month/year, year only, and annual holidays are supported. Unknown date parts remain approximate. February 29 uses February 28 in non-leap years.</p>
+      <h3>Your Data</h3><p>Events stay in this browser until you export them or connect Google Drive. Installing the app does not back up its records. Offline editing works after the app has loaded online; Google sync requires an active connection.</p>
+      <p><a href="about.html">More Apps</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p>
     </section>
+    <div class="shared-footer"><button type="button" data-close>Done</button></div>
+  </dialog>
+  <dialog id="backup-tools" class="shared-backup" aria-labelledby="backup-tools-title">
+    <div class="shared-backup-content">
+      <div class="shared-backup-header">
+        <h2 id="backup-tools-title">Backup &amp; Restore</h2>
+        <button type="button" id="backup-close" aria-label="Back to Settings">×</button>
+      </div>
+      <section class="shared-backup-group" id="backups">
+        <h3>Backup File (JSON)</h3>
+        <div class="shared-stack">
+          <button id="export-json" type="button">Export Backup File</button>
+          <button id="import-json" type="button">Restore from Backup File</button>
+          <input id="import-file" type="file" accept=".json,application/json" hidden>
+        </div>
+
+      </section>
+      <section class="shared-backup-group">
+        <h3>Spreadsheet (CSV)</h3>
+        <p class="field-hint">Open your events in Excel or another spreadsheet app.</p>
+        <div class="shared-stack"><button id="export-csv" type="button">Export CSV</button></div>
+      </section>
+      <section class="shared-backup-group">
+        <h3>Google Drive</h3>
+        <p id="drive-status" role="status">Google Drive is disconnected.</p>
+        <div class="shared-stack">
+          <button id="drive-connect" type="button">Connect Google Drive</button>
+          <div id="drive-actions" class="shared-stack" hidden>
+            <p id="drive-account" class="field-hint"></p>
+            <p id="sync-overview" class="field-hint"></p>
+            <button id="drive-now" type="button" class="primary" disabled>Sync Now</button>
+            <button id="drive-backup" type="button" disabled>Back Up to Google Drive</button>
+            <button id="drive-restore" type="button" disabled>Restore from Google Drive</button>
+            <button id="drive-disconnect" type="button" disabled>Disconnect Google Drive</button>
+            <label class="check auto-sync-choice"><input id="drive-auto" type="checkbox" checked> Automatically sync while connected</label>
+          </div>
+        </div>
+        <details class="backup-advanced"><summary>Sync and recovery details</summary><p class="field-hint">Sync combines newer event edits and saved deletions. It checks after edits, when you return or reconnect, and about once a minute while visible. Initial merges and conflicting edits may need review. Independently created event IDs remain separate.</p><p class="field-hint">Back up creates a separate, verified recovery copy of this device. Restore uses the latest manual Drive backup, or existing sync history if no manual backup exists. Restore previews counts and replaces the local event list only after confirmation. Restored changes can then sync to other devices. Export JSON first if needed.</p><p class="field-hint">Disconnect keeps your events and cloud copies. Milestones files remain separate from PTO Tracker and Infinity Bottle. Keep dated JSON exports outside the browser too.</p></details>
+      </section>
+      <div id="backup-recovery"><details class="backup-advanced"><summary>Advanced recovery</summary><p class="field-hint">Export your current events first. These options change the local event list and can then sync to your other devices.</p><div class="backup-options"><button id="recover-legacy">Check older local events</button><button id="undo">Restore previous local state</button></div><p class="field-hint">Check older local events merges any retained pre-sync copy, preserving newer edits and deletions. Restore previous local state restores the single undo point from the last change. The next change replaces it; it is not an independent backup.</p></details></div>
+      <p class="form-error" id="backup-error" role="alert"></p>
+      <div class="shared-footer"><button id="backup-done" type="button">Done</button></div>
+    </div>
   </dialog>
   <dialog id="delete-confirm" class="confirm-dialog" aria-labelledby="delete-title" aria-describedby="delete-explanation">
     <p class="eyebrow">CONFIRM ACTION</p><h2 id="delete-title">Delete this event?</h2><p id="delete-explanation">Review the event before deleting it.</p>
@@ -78,5 +112,5 @@
     <div class="confirm-actions"><button type="button" data-confirm-cancel autofocus>Cancel</button><button type="button" class="primary" data-confirm-accept>Continue</button></div>
   </dialog>
   <datalist id="categories"></datalist><div id="toast" role="status" aria-live="polite" hidden></div>
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=1.7.2"></script>
 </body></html>
